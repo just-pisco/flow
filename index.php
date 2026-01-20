@@ -5,6 +5,7 @@ if (!isset($_SESSION['user_id'])) {
     exit();
 }
 require_once 'includes/db.php';
+ //push
 
 // Auto-redirect al progetto più recente se non c'è project_id
 if (!isset($_GET['project_id'])) {
