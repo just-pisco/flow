@@ -37,7 +37,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 </head>
 
 <body class="bg-slate-100 h-screen flex items-center justify-center p-4">
-    <div class="bg-white p-8 rounded-2xl shadow-xl w-full max-w-md">
+    <div class="bg-white p-8 rounded-2xl shadow-xl w-[90%] max-w-md">
         <h1 class="text-3xl font-bold text-center text-indigo-600 mb-8">Flow.</h1>
         <?php if ($error): ?>
             <div class="bg-red-100 text-red-700 p-3 rounded mb-4 text-sm">
