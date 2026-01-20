@@ -32,13 +32,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Flow - Login</title>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
 
 <body class="bg-slate-100 h-screen flex items-center justify-center p-4">
-    <div class="bg-white p-8 rounded-2xl shadow-xl w-[90%] max-w-md">
-        <h1 class="text-3xl font-bold text-center text-indigo-600 mb-8">Flow.</h1>
+    <div class="bg-white p-6 md:p-8 rounded-2xl shadow-xl w-full max-w-lg">
+        <h1 class="text-3xl font-bold text-center text-indigo-600 mb-6 md:mb-8">Flow.</h1>
         <?php if ($error): ?>
             <div class="bg-red-100 text-red-700 p-3 rounded mb-4 text-sm">
                 <?php echo $error; ?>
@@ -48,15 +49,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <div>
                 <label class="block text-sm font-medium text-slate-700">Username</label>
                 <input type="text" name="username" required
-                    class="w-full border rounded-lg p-2.5 mt-1 focus:ring-2 focus:ring-indigo-500 outline-none">
+                    class="w-full border rounded-lg p-3 md:p-2.5 mt-1 text-base focus:ring-2 focus:ring-indigo-500 outline-none">
             </div>
             <div>
                 <label class="block text-sm font-medium text-slate-700">Password</label>
                 <input type="password" name="password" required
-                    class="w-full border rounded-lg p-2.5 mt-1 focus:ring-2 focus:ring-indigo-500 outline-none">
+                    class="w-full border rounded-lg p-3 md:p-2.5 mt-1 text-base focus:ring-2 focus:ring-indigo-500 outline-none">
             </div>
             <button type="submit"
-                class="w-full bg-indigo-600 text-white py-2.5 rounded-lg font-bold hover:bg-indigo-700 transition">Accedi</button>
+                class="w-full bg-indigo-600 text-white py-3 md:py-2.5 rounded-lg font-bold hover:bg-indigo-700 transition shadow-lg shadow-indigo-200">Accedi</button>
         </form>
     </div>
 </body>
