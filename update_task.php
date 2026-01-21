@@ -59,8 +59,8 @@ if (isset($data['id'])) {
         $sql = "UPDATE tasks SET " . implode(', ', $updates) . " WHERE id = :id";
         $stmt = $pdo->prepare($sql);
         if (!$stmt->execute($params)) {
-             echo json_encode(['success' => false, 'error' => 'Main update failed']);
-             exit;
+            echo json_encode(['success' => false, 'error' => 'Main update failed']);
+            exit;
         }
     }
 
@@ -83,9 +83,5 @@ if (isset($data['id'])) {
     echo json_encode(['success' => true]);
     exit; // Stop further execution since we handled logic manually above
 
-    /* Original Logic Block Skipped */
-    if (false) {
-}
-    }
 }
 ?>
