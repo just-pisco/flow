@@ -17,6 +17,12 @@ if (!isset($_GET['project_id'])) {
         exit();
     }
 }
+
+// Fetch User's Gemini API Key
+$stmt = $pdo->prepare("SELECT gemini_api_key FROM users WHERE id = ?");
+$stmt->execute([$_SESSION['user_id']]);
+$user = $stmt->fetch();
+$apiKey = $user['gemini_api_key'] ?? null;
 ?>
 <!DOCTYPE html>
 <html lang="it">
@@ -381,12 +387,37 @@ if (!isset($_GET['project_id'])) {
             </div>
             <div class="mb-4">
                 <label class="block text-sm font-medium text-slate-700 mb-1">Gemini API Key</label>
-                <input type="password" id="geminiKeyInput" placeholder="AIhaSy..." class="w-full border border-slate-300 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                <div class="relative">
+                    <input type="password" id="geminiKeyInput" placeholder="<?php echo $apiKey ? '••••••••••••••••' : 'AIhaSy...'; ?>" class="w-full border border-slate-300 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-indigo-500 pr-10">
+                    <?php if ($apiKey): ?>
+                       <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-green-500">
+                           <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                             <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                           </svg>
+                       </div>
+                    <?php endif; ?>
+                </div>
+                <?php if ($apiKey): ?>
+                    <p class="text-xs text-green-600 mt-1 font-semibold flex items-center gap-1">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>
+                        Chiave salvata e attiva.
+                    </p>
+                <?php else: ?>
+                     <p class="text-xs text-slate-400 mt-1">Nessuna chiave salvata.</p>
+                <?php endif; ?>
             </div>
 
-            <div class="flex justify-end gap-3">
-                <button onclick="closeSettingsModal()" class="px-4 py-2 rounded-lg text-slate-700 hover:bg-slate-100 font-medium transition-colors">Annulla</button>
-                <button onclick="saveGeminiKey()" class="px-4 py-2 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 font-bold transition-all">Salva</button>
+            <div class="flex justify-between items-center mt-6">
+                <?php if ($apiKey): ?>
+                    <button onclick="deleteGeminiKey()" class="text-red-500 hover:text-red-700 text-sm font-medium underline">Elimina Chiave</button>
+                <?php else: ?>
+                    <div></div> <!-- Spacer -->
+                <?php endif; ?>
+                
+                <div class="flex gap-3">
+                    <button onclick="closeSettingsModal()" class="px-4 py-2 rounded-lg text-slate-700 hover:bg-slate-100 font-medium transition-colors">Annulla</button>
+                    <button onclick="saveGeminiKey()" class="px-4 py-2 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 font-bold transition-all">Salva</button>
+                </div>
             </div>
         </div>
     </div>
@@ -776,10 +807,15 @@ if (!isset($_GET['project_id'])) {
     const commitTaskList = document.getElementById('commitTaskList');
     const generatedCommitMsg = document.getElementById('generatedCommitMsg');
     const btnGenerate = document.getElementById('btnGenerate');
+    
+    // Server-side API KEY passed to JS
+    const HAS_API_KEY = <?php echo $apiKey ? 'true' : 'false'; ?>;
+    const USER_API_KEY = "<?php echo $apiKey ? $apiKey : ''; ?>"; 
+    // ^ SECURITY NOTE: Outputting key in source is generally okay-ish for private apps but ideally we proxy requests.
+    // For this architecture (BYOK), user provides key, sending it back to them is standard.
 
     function openSettingsModal() {
-        const key = localStorage.getItem('gemini_api_key') || '';
-        geminiKeyInput.value = key;
+        geminiKeyInput.value = ''; // Clear input for security/ux
         settingsModal.classList.remove('hidden');
     }
 
@@ -790,19 +826,51 @@ if (!isset($_GET['project_id'])) {
     function saveGeminiKey() {
         const key = geminiKeyInput.value.trim();
         if (key) {
-            localStorage.setItem('gemini_api_key', key);
-            alert('Chiave salvata nel browser!');
-            closeSettingsModal();
+            // Save to DB
+            fetch('api_key_manager.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action: 'save', key: key })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    alert('Chiave salvata nel tuo account!');
+                    location.reload(); // Reload to update UI state
+                } else {
+                    alert('Errore salvataggio: ' + data.error);
+                }
+            });
         } else {
             alert('Inserisci una chiave valida.');
         }
     }
+    
+    function deleteGeminiKey() {
+         if(confirm("Sei sicuro di voler rimuovere la tua API Key? Non potrai più usare le funzioni AI.")) {
+            fetch('api_key_manager.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action: 'delete' })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    alert('Chiave rimossa.');
+                    location.reload();
+                } else {
+                     alert('Errore: ' + data.error);
+                }
+            });
+         }
+    }
 
     function openCommitModal() {
-        if (!localStorage.getItem('gemini_api_key')) {
-            if(confirm("Devi prima impostare la tua Gemini API Key. Vuoi farlo ora?")) {
-                openSettingsModal();
-            }
+        // Use PHP state check
+        if (!HAS_API_KEY) {
+            // Simply open settings modal directly
+            openSettingsModal();
+            // Optional: You could show a specialized message inside settings like "Please set key first"
             return;
         }
 
@@ -891,7 +959,7 @@ if (!isset($_GET['project_id'])) {
             return;
         }
 
-        const apiKey = localStorage.getItem('gemini_api_key');
+        const apiKey = USER_API_KEY; // Use server-provided key logic
         const prompt = `Act as a senior developer. Generate a single comprehensive Conventional Commit message (type(scope): description) IN ITALIAN for these completed tasks: \n- ${selectedTitles.join('\n- ')}\n\nOnly output the git commit command like: git commit -m "..."`;
 
         btnGenerate.disabled = true;
