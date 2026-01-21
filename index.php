@@ -215,9 +215,9 @@ $apiKey = $user['gemini_api_key'] ?? null;
                             ?>
                                 <div id="task-<?php echo $task['id']; ?>" data-id="<?php echo $task['id']; ?>"
                                     onclick="openEditTask(<?php echo htmlspecialchars(json_encode($task)); ?>)"
-                                    class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex justify-between items-center transition-all cursor-pointer hover:shadow-md hover:border-indigo-300 <?php echo $isDone ? 'opacity-50' : ''; ?>">
+                                    class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex flex-col sm:flex-row justify-between items-start sm:items-center transition-all cursor-pointer hover:shadow-md hover:border-indigo-300 <?php echo $isDone ? 'opacity-50' : ''; ?>">
                             
-                                    <div class="flex items-center gap-3 overflow-hidden">
+                                    <div class="flex items-center gap-3 overflow-hidden w-full sm:w-auto">
                                         <!-- Drag Handle -->
                                         <div class="cursor-move drag-handle text-slate-300 hover:text-slate-500" onclick="event.stopPropagation()">
                                             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -231,7 +231,7 @@ $apiKey = $user['gemini_api_key'] ?? null;
                                             <?php echo $isDone ? 'checked' : ''; ?>
                                             class="w-5 h-5 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer">
                                 
-                                        <span class="task-title text-slate-700 font-medium whitespace-nowrap overflow-x-auto block max-w-[170px] sm:max-w-xs md:max-w-sm <?php echo $isDone ? 'line-through' : ''; ?>" 
+                                        <span class="task-title text-slate-700 font-medium whitespace-nowrap overflow-x-auto block w-full sm:max-w-xs md:max-w-sm <?php echo $isDone ? 'line-through' : ''; ?>" 
                                               style="-ms-overflow-style: none; scrollbar-width: none;"> <!-- Hide scrollbar Firefox/IE -->
                                             <style>
                                                 /* Hide scrollbar Chrome/Safari/Webkit */
@@ -241,7 +241,7 @@ $apiKey = $user['gemini_api_key'] ?? null;
                                         </span>
                                     </div>
 
-                                    <div class="flex items-center gap-2">
+                                    <div class="flex items-center gap-2 mt-2 sm:mt-0 w-full sm:w-auto justify-end sm:justify-start">
                                         <?php if (!empty($task['scadenza'])):
                                             $scadenza = new DateTime($task['scadenza']);
                                             $oggi = new DateTime('today');
@@ -459,7 +459,7 @@ $apiKey = $user['gemini_api_key'] ?? null;
             </div>
 
             <div class="flex justify-between items-center gap-3">
-                 <button onclick="generateCommit()" id="btnGenerate" class="flex-1 px-4 py-2 rounded-lg bg-gradient-to-r from-purple-600 to-indigo-600 text-white hover:opacity-90 font-bold transition-all shadow-lg">
+                 <button onclick="generateCommit()" id="btnGenerate" class="flex-1 px-4 py-2 rounded-lg bg-gradient-to-r from-purple-700 to-indigo-800 text-white hover:opacity-90 font-bold transition-all shadow-lg">
                     ✨ Genera
                 </button>
                  <button onclick="copyToClipboard()" class="px-4 py-2 rounded-lg bg-slate-200 text-slate-700 hover:bg-slate-300 font-bold transition-all">
@@ -1023,21 +1023,32 @@ $apiKey = $user['gemini_api_key'] ?? null;
             return;
         }
 
-        // 1. Gather tasks (only completed?)
-        // Let's get ALL tasks visible in the DOM
+        // 1. Gather tasks
         const tasks = [];
         document.querySelectorAll('[id^="task-"]').forEach(el => {
             const id = el.getAttribute('id').replace('task-', '');
-            // Find title text in the span
-            const titleEl = el.querySelector('.task-title'); 
-            if (!titleEl) return; // Skip if finding fails (safety)
-            const isDone = titleEl.classList.contains('line-through'); // Check style to know if done
-            const text = titleEl.innerText.trim();
             
-            // Only show completed tasks by default? Or all? User said "once done".
-            // Let's show all but pre-check completed ones?
+            const titleEl = el.querySelector('.task-title'); 
+            if (!titleEl) return;
+            const isDone = titleEl.classList.contains('line-through'); 
+            const text = titleEl.innerText.trim();
+
+            // Parse task data from onclick attribute
+            const onclickStr = el.getAttribute('onclick');
+            let description = '';
+            if (onclickStr) {
+                try {
+                    // regex to extract JSON between openEditTask( and )
+                    const match = onclickStr.match(/openEditTask\((.*)\)/);
+                    if (match && match[1]) {
+                        const taskData = JSON.parse(match[1]);
+                        description = taskData.descrizione || '';
+                    }
+                } catch (e) { console.error("Error parsing task data", e); }
+            }
+            
             if (isDone) {
-                 tasks.push({ id, text });
+                 tasks.push({ id, text, description });
             }
         });
 
@@ -1049,7 +1060,7 @@ $apiKey = $user['gemini_api_key'] ?? null;
         // 2. Populate List
         commitTaskList.innerHTML = tasks.map(t => `
             <label class="flex items-center gap-3 p-2 hover:bg-white rounded cursor-pointer border border-transparent hover:border-indigo-100">
-                <input type="checkbox" value="${t.text}" checked class="w-4 h-4 text-purple-600 rounded focus:ring-purple-500">
+                <input type="checkbox" value="${t.text}" data-description="${t.description.replace(/"/g, '&quot;')}" checked class="w-4 h-4 text-purple-600 rounded focus:ring-purple-500">
                 <span class="text-sm text-slate-700 truncate">${t.text}</span>
             </label>
         `).join('');
@@ -1101,15 +1112,25 @@ $apiKey = $user['gemini_api_key'] ?? null;
 
     async function generateCommit() {
         const checkboxes = commitTaskList.querySelectorAll('input[type="checkbox"]:checked');
-        const selectedTitles = Array.from(checkboxes).map(cb => cb.value);
+        const selectedTasks = Array.from(checkboxes).map(cb => {
+            return {
+                title: cb.value,
+                description: cb.getAttribute('data-description') || ''
+            };
+        });
 
-        if (selectedTitles.length === 0) {
+        if (selectedTasks.length === 0) {
             showToast("Seleziona almeno un task.", "error");
             return;
         }
 
         const apiKey = USER_API_KEY; // Use server-provided key logic
-        const prompt = `Act as a senior developer. Generate a single comprehensive Conventional Commit message (type(scope): description) IN ITALIAN for these completed tasks: \n- ${selectedTitles.join('\n- ')}\n\nOnly output the git commit command like: git commit -m "..."`;
+        
+        let taskListStr = selectedTasks.map(t => {
+            return `- Title: ${t.title}\n  Description: ${t.description}`;
+        }).join('\n');
+
+        const prompt = `Act as a senior developer. Generate a single comprehensive Conventional Commit message (type(scope): description) IN ITALIAN for these completed tasks: \n${taskListStr}\n\nOnly output the git commit command like: git commit -m "..."`;
 
         btnGenerate.disabled = true;
         btnGenerate.innerHTML = "Ricerca Modello...";
