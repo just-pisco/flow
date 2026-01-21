@@ -5,11 +5,12 @@ if (!isset($_SESSION['user_id'])) {
     exit();
 }
 require_once 'includes/db.php';
- //push
+//push
 
 // Auto-redirect al progetto più recente se non c'è project_id
 if (!isset($_GET['project_id'])) {
-    $stmt = $pdo->query("SELECT id FROM projects ORDER BY data_modifica DESC LIMIT 1");
+    $stmt = $pdo->prepare("SELECT id FROM projects WHERE user_id = ? ORDER BY data_modifica DESC LIMIT 1");
+    $stmt->execute([$_SESSION['user_id']]);
     $lastProject = $stmt->fetch();
     if ($lastProject) {
         header("Location: index.php?project_id=" . $lastProject['id']);
@@ -24,20 +25,27 @@ if (!isset($_GET['project_id'])) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Flow - Gestione Progetti</title>
+    <title>Flow - Gestione Progetti</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.2/Sortable.min.js"></script>
 </head>
 
 <body class="bg-gray-50 text-gray-900">
     <div class="flex h-screen">
         <?php require_once 'includes/db.php'; ?>
-        <div id="sidebarOverlay" onclick="toggleSidebar()" class="fixed inset-0 bg-black bg-opacity-50 z-40 hidden md:hidden glass"></div>
-        <aside id="sidebar" class="fixed inset-y-0 left-0 z-50 w-64 bg-slate-900 text-white p-6 transform -translate-x-full md:translate-x-0 md:relative transition-transform duration-300 ease-in-out shadow-xl">
+        <div id="sidebarOverlay" onclick="toggleSidebar()"
+            class="fixed inset-0 bg-black bg-opacity-50 z-40 hidden md:hidden glass"></div>
+        <aside id="sidebar"
+            class="fixed inset-y-0 left-0 z-50 w-64 bg-slate-900 text-white p-6 transform -translate-x-full md:translate-x-0 md:relative transition-transform duration-300 ease-in-out shadow-xl">
 
             <div class="flex justify-between items-center md:block">
-                <a href="index.php" class="text-2xl font-bold tracking-tight text-indigo-400 no-underline hover:text-indigo-300 transition block">Flow.</a>
+                <a href="index.php"
+                    class="text-2xl font-bold tracking-tight text-indigo-400 no-underline hover:text-indigo-300 transition block">Flow.</a>
                 <button onclick="toggleSidebar()" class="md:hidden text-slate-400 hover:text-white">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
+                        stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M6 18L18 6M6 6l12 12" />
                     </svg>
                 </button>
             </div>
@@ -55,7 +63,8 @@ if (!isset($_GET['project_id'])) {
                 <ul class="space-y-2">
                     <?php
                     // Recuperiamo i progetti dal DB
-                    $stmt = $pdo->query("SELECT * FROM projects ORDER BY data_modifica DESC");
+                    $stmt = $pdo->prepare("SELECT * FROM projects WHERE user_id = ? ORDER BY data_modifica DESC");
+                    $stmt->execute([$_SESSION['user_id']]);
                     while ($row = $stmt->fetch()) {
                         $activeClass = (isset($_GET['project_id']) && $_GET['project_id'] == $row['id']) ? 'bg-slate-800 border-indigo-500' : 'border-transparent';
                         echo "<li class='hover:bg-slate-800 p-2 rounded-md cursor-pointer transition-colors border-l-4 $activeClass'>";
@@ -68,13 +77,19 @@ if (!isset($_GET['project_id'])) {
             </nav>
             </nav>
 
-             <div class="absolute bottom-6 left-6 right-6 space-y-2">
-                <a href="export_data.php" class="flex items-center gap-3 text-slate-400 hover:text-indigo-400 transition-colors p-2 rounded-md hover:bg-slate-800" title="Scarica Backup JSON">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <div class="absolute bottom-6 left-6 right-6 space-y-2">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
                     </svg>
                     <span class="font-medium text-sm">Backup Dati</span>
                 </a>
+                <button onclick="openSettingsModal()" class="flex items-center gap-3 text-slate-400 hover:text-indigo-400 transition-colors p-2 rounded-md hover:bg-slate-800 w-full text-left">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>
+                    <span class="font-medium text-sm">Impostazioni AI</span>
+                </button>
                 <a href="logout.php" class="flex items-center gap-3 text-slate-400 hover:text-white transition-colors p-2 rounded-md hover:bg-slate-800">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
@@ -96,33 +111,51 @@ if (!isset($_GET['project_id'])) {
             $project_name = "Seleziona un progetto";
 
             if ($project_id) {
-                // Recupera nome progetto
-                $stmt = $pdo->prepare("SELECT nome FROM projects WHERE id = ?");
-                $stmt->execute([$project_id]);
-                $project = $stmt->fetch();
-                $project_name = $project['nome'] ?? "Progetto non trovato";
-            }
-            ?>
+                if ($project_id) {
+                    // Verify ownership
+                    $stmt = $pdo->prepare("SELECT nome FROM projects WHERE id = ? AND user_id = ?");
+                    $stmt->execute([$project_id, $_SESSION['user_id']]);
+                    $project = $stmt->fetch();
+
+                    if ($project) {
+                        $project_name = $project['nome'];
+                    } else {
+                        // Project not found or access denied
+                        $project_id = null;
+                        echo "<div class='bg-red-100 text-red-700 p-4 rounded-lg mb-4'>Progetto non trovato o accesso negato.</div>";
+                    }
+                }
+            } ?>
 
             <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b pb-6 pt-10 md:pt-0">
                 <div class="flex items-center gap-4">
-                    <h2 class="text-2xl md:text-3xl font-extrabold text-slate-800" id="projectTitleDisplay"><?php echo htmlspecialchars($project_name); ?></h2>
+                    <h2 class="text-3xl font-bold text-slate-800 tracking-tight" id="projectTitleDisplay"><?php echo htmlspecialchars($project_name); ?></h2>
                     <?php if ($project_id): ?>
-                        <div class="flex items-center gap-2">
-                             <button onclick="editProject(<?php echo $project_id; ?>, '<?php echo addslashes($project_name); ?>')" class="text-slate-400 hover:text-indigo-600 transition-colors p-1" title="Rinomina Progetto">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-                                </svg>
-                            </button>
-                            <button onclick="confirmDeleteProject(<?php echo $project_id; ?>)" class="text-slate-400 hover:text-red-600 transition-colors p-1" title="Elimina Progetto">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                </svg>
-                            </button>
-                        </div>
+                            <div class="flex items-center gap-2">
+                                 <button onclick="editProject(<?php echo $project_id; ?>, '<?php echo addslashes($project_name); ?>')" class="text-slate-400 hover:text-indigo-600 transition-colors">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                                    </svg>
+                                </button>
+                                <button onclick="confirmDeleteProject(<?php echo $project_id; ?>)" class="text-slate-400 hover:text-red-600 transition-colors">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                    </svg>
+                                </button>
+                            </div>
                     <?php endif; ?>
                 </div>
                 
+                <!-- Gemini Magic Button -->
+                <?php if ($project_id): ?>
+                    <button onclick="openCommitModal()" class="flex items-center gap-2 bg-gradient-to-r from-purple-500 to-indigo-600 text-white px-4 py-2 rounded-lg font-bold hover:shadow-lg hover:opacity-90 transition transform hover:-translate-y-0.5 text-sm">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                        </svg>
+                         Genera Commit AI
+                    </button>
+                <?php endif; ?>
+            
                 <div class="relative w-full md:w-64">
                     <input type="text" id="taskSearch" placeholder="Cerca task..." 
                         onkeyup="searchTasks()"
@@ -133,84 +166,104 @@ if (!isset($_GET['project_id'])) {
 
 
             <?php if ($project_id): ?>
-                <form action="add_task.php" method="POST" class="mt-6 flex flex-col md:flex-row gap-2">
-                    <input type="hidden" name="project_id" value="<?php echo $project_id; ?>">
-                    <div class="flex-1 flex flex-col md:flex-row gap-2">
-                        <input type="text" name="titolo" placeholder="Aggiungi un nuovo task..." required
-                            class="w-full md:flex-1 border border-slate-300 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-sm">
+                    <form action="add_task.php" method="POST" class="mt-6 flex flex-col md:flex-row gap-2">
+                        <input type="hidden" name="project_id" value="<?php echo $project_id; ?>">
+                        <div class="flex-1 flex flex-col md:flex-row gap-2">
+                            <input type="text" name="titolo" placeholder="Aggiungi un nuovo task..." required
+                                class="w-full md:flex-1 border border-slate-300 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-sm">
                         
-                        <div class="relative w-full md:w-auto">
-                            <div class="absolute inset-y-0 start-0 flex items-center ps-3.5 pointer-events-none">
-                                <svg class="w-4 h-4 text-gray-500" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
-                                    <path d="M20 4a2 2 0 0 0-2-2h-2V1a1 1 0 0 0-2 0v1h-3V1a1 1 0 0 0-2 0v1H6V1a1 1 0 0 0-2 0v1H2a2 2 0 0 0-2 2v2h20V4ZM0 18a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V8H0v10Zm5-8h10a1 1 0 0 1 0 2H5a1 1 0 0 1 0-2Z"/>
-                                </svg>
-                            </div>
-                            <input type="text" name="scadenza" datepicker datepicker-autohide datepicker-format="dd/mm/yyyy" datepicker-orientation="bottom right"
-                                class="bg-white border border-slate-300 text-slate-900 text-sm rounded-lg focus:ring-indigo-500 focus:border-indigo-500 block w-full md:w-40 ps-10 p-3" 
-                                placeholder="Scadenza">
-                        </div>
-                    </div>
-                    <button type="submit" class="bg-indigo-600 text-white px-6 py-2 rounded-lg font-bold hover:bg-indigo-700 transition w-full sm:w-auto">Aggiungi</button>
-                </form>
-
-                <div class="mt-8 space-y-3">
-                    <?php
-                    $stmt = $pdo->prepare("SELECT * FROM tasks WHERE project_id = ? ORDER BY data_creazione DESC");
-                    $stmt->execute([$project_id]);
-                    while ($task = $stmt->fetch()): 
-                        $isDone = ($task['stato'] === 'completato');
-                    ?>
-                        <div id="task-<?php echo $task['id']; ?>" 
-                            onclick="openEditTask(<?php echo htmlspecialchars(json_encode($task)); ?>)"
-                            class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex justify-between items-center transition-all cursor-pointer hover:shadow-md hover:border-indigo-300 <?php echo $isDone ? 'opacity-50' : ''; ?>">
-                            
-                            <div class="flex items-center gap-3">
-                                <input type="checkbox" 
-                                    onclick="event.stopPropagation()"
-                                    onchange="toggleTask(<?php echo $task['id']; ?>, this.checked)"
-                                    <?php echo $isDone ? 'checked' : ''; ?>
-                                    class="w-5 h-5 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer">
-                                
-                                <span class="text-slate-700 font-medium <?php echo $isDone ? 'line-through' : ''; ?>">
-                                    <?php echo htmlspecialchars($task['titolo']); ?>
-                                </span>
-                            </div>
-
-                            <div class="flex items-center gap-2">
-                                <?php if (!empty($task['scadenza'])): 
-                                    $scadenza = new DateTime($task['scadenza']);
-                                    $oggi = new DateTime('today');
-                                    $differenza = $oggi->diff($scadenza);
-                                    $isScaduto = $scadenza < $oggi && !$isDone;
-                                    $isOggi = $scadenza == $oggi && !$isDone;
-                                    
-                                    $dateClass = 'text-slate-400';
-                                    if ($isScaduto) $dateClass = 'text-red-500 font-bold';
-                                    if ($isOggi) $dateClass = 'text-orange-500 font-bold';
-                                ?>
-                                    <span class="text-xs <?php echo $dateClass; ?> mr-2 flex items-center gap-1" title="Scadenza: <?php echo $scadenza->format('d/m/Y'); ?>">
-                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                        </svg>
-                                        <?php echo $scadenza->format('d M'); ?>
-                                    </span>
-                                <?php endif; ?>
-
-                                <div id="task-badge-<?php echo $task['id']; ?>" class="text-xs font-bold uppercase px-2 py-1 rounded <?php echo $isDone ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-500'; ?>">
-                                    <?php echo str_replace('_', ' ', $task['stato']); ?>
-                                </div>
-                                <button onclick="event.stopPropagation(); deleteTask(<?php echo $task['id']; ?>)" class="text-slate-400 hover:text-red-500 p-1 transition-colors">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            <div class="relative w-full md:w-auto">
+                                <div class="absolute inset-y-0 start-0 flex items-center ps-3.5 pointer-events-none">
+                                    <svg class="w-4 h-4 text-gray-500" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
+                                        <path d="M20 4a2 2 0 0 0-2-2h-2V1a1 1 0 0 0-2 0v1h-3V1a1 1 0 0 0-2 0v1H6V1a1 1 0 0 0-2 0v1H2a2 2 0 0 0-2 2v2h20V4ZM0 18a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V8H0v10Zm5-8h10a1 1 0 0 1 0 2H5a1 1 0 0 1 0-2Z"/>
                                     </svg>
-                                </button>
+                                </div>
+                                <input type="text" name="scadenza" datepicker datepicker-autohide datepicker-format="dd/mm/yyyy" datepicker-orientation="bottom right"
+                                    class="bg-white border border-slate-300 text-slate-900 text-sm rounded-lg focus:ring-indigo-500 focus:border-indigo-500 block w-full md:w-40 ps-10 p-3" 
+                                    placeholder="Scadenza">
                             </div>
                         </div>
-                    <?php endwhile; ?>
-                </div>
+                        <button type="submit" class="bg-indigo-600 text-white px-6 py-2 rounded-lg font-bold hover:bg-indigo-700 transition w-full sm:w-auto">Aggiungi</button>
+                    </form>
+
+                    </form>
+                
+                    <div id="taskList" class="mt-8 space-y-3">
+                        <?php
+                        // Check if column exists to avoid crash before migration (Optional safety, or just assume migration)
+                        // We'll stick to the query. If migration not run, it might error.
+                        // Let's assume user runs migration.
+                        // Default order: ordinamento ASC (custom), then data_creazione DESC (newest top if tie)
+                        $stmt = $pdo->prepare("SELECT * FROM tasks WHERE project_id = ? ORDER BY ordinamento ASC, data_creazione DESC");
+                        $stmt->execute([$project_id]);
+                        while ($task = $stmt->fetch()):
+                            $isDone = ($task['stato'] === 'completato');
+                            ?>
+                                <div id="task-<?php echo $task['id']; ?>" data-id="<?php echo $task['id']; ?>"
+                                    onclick="openEditTask(<?php echo htmlspecialchars(json_encode($task)); ?>)"
+                                    class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex justify-between items-center transition-all cursor-pointer hover:shadow-md hover:border-indigo-300 <?php echo $isDone ? 'opacity-50' : ''; ?>">
+                            
+                                    <div class="flex items-center gap-3 overflow-hidden">
+                                        <!-- Drag Handle -->
+                                        <div class="cursor-move drag-handle text-slate-300 hover:text-slate-500" onclick="event.stopPropagation()">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8h16M4 16h16" />
+                                            </svg>
+                                        </div>
+
+                                        <input type="checkbox" 
+                                            onclick="event.stopPropagation()"
+                                            onchange="toggleTask(<?php echo $task['id']; ?>, this.checked)"
+                                            <?php echo $isDone ? 'checked' : ''; ?>
+                                            class="w-5 h-5 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer">
+                                
+                                        <span class="task-title text-slate-700 font-medium whitespace-nowrap overflow-x-auto block max-w-[170px] sm:max-w-xs md:max-w-sm <?php echo $isDone ? 'line-through' : ''; ?>" 
+                                              style="-ms-overflow-style: none; scrollbar-width: none;"> <!-- Hide scrollbar Firefox/IE -->
+                                            <style>
+                                                /* Hide scrollbar Chrome/Safari/Webkit */
+                                                span::-webkit-scrollbar { display: none; }
+                                            </style>
+                                            <?php echo htmlspecialchars($task['titolo']); ?>
+                                        </span>
+                                    </div>
+
+                                    <div class="flex items-center gap-2">
+                                        <?php if (!empty($task['scadenza'])):
+                                            $scadenza = new DateTime($task['scadenza']);
+                                            $oggi = new DateTime('today');
+                                            $differenza = $oggi->diff($scadenza);
+                                            $isScaduto = $scadenza < $oggi && !$isDone;
+                                            $isOggi = $scadenza == $oggi && !$isDone;
+
+                                            $dateClass = 'text-slate-400';
+                                            if ($isScaduto)
+                                                $dateClass = 'text-red-500 font-bold';
+                                            if ($isOggi)
+                                                $dateClass = 'text-orange-500 font-bold';
+                                            ?>
+                                                <span class="text-xs <?php echo $dateClass; ?> mr-2 flex items-center gap-1" title="Scadenza: <?php echo $scadenza->format('d/m/Y'); ?>">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                                    </svg>
+                                                    <?php echo $scadenza->format('d M'); ?>
+                                                </span>
+                                        <?php endif; ?>
+
+                                        <div id="task-badge-<?php echo $task['id']; ?>" class="text-xs font-bold uppercase px-2 py-1 rounded <?php echo $isDone ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-500'; ?>">
+                                            <?php echo str_replace('_', ' ', $task['stato']); ?>
+                                        </div>
+                                        <button onclick="event.stopPropagation(); deleteTask(<?php echo $task['id']; ?>)" class="text-slate-400 hover:text-red-500 p-1 transition-colors">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                            </svg>
+                                        </button>
+                                    </div>
+                                </div>
+                        <?php endwhile; ?>
+                    </div>
             <?php else: ?>
-                <p class="mt-10 text-slate-500 italic text-center text-lg">Seleziona un progetto dalla sidebar per iniziare
-                    a lavorare.</p>
+                    <p class="mt-10 text-slate-500 italic text-center text-lg">Seleziona un progetto dalla sidebar per iniziare
+                        a lavorare.</p>
             <?php endif; ?>
         </main>
     </div>
@@ -303,6 +356,79 @@ if (!isset($_GET['project_id'])) {
                 <button onclick="closeEditTaskModal()" class="w-full sm:w-auto px-4 py-2 rounded-lg text-slate-700 hover:bg-slate-100 font-medium transition-colors border border-slate-300">Annulla</button>
                 <button onclick="saveTaskChanges()" class="w-full sm:w-auto px-4 py-2 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 font-bold shadow-lg shadow-indigo-200 transition-all">Salva Modifiche</button>
             </div>
+        </div>
+    </div>
+
+    <!-- AI Settings Modal -->
+    <div id="settingsModal" class="fixed inset-0 z-50 flex items-center justify-center hidden">
+        <div class="absolute inset-0 bg-gray-900/75 backdrop-blur-sm" onclick="closeSettingsModal()"></div>
+        <div class="bg-white rounded-xl shadow-2xl p-6 w-full max-w-md relative z-10">
+            <h3 class="text-xl font-bold text-slate-900 mb-4 flex items-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                </svg>
+                Impostazioni AI Gemini
+            </h3>
+            <p class="text-sm text-slate-500 mb-4">Inserisci la tua API Key di Google Gemini. Verrà salvata solo nel tuo browser.</p>
+            
+            <div class="bg-indigo-50 text-indigo-700 p-4 rounded-lg text-sm mb-4 border border-indigo-100">
+                <p class="font-bold mb-1">Non hai una chiave?</p>
+                <p class="mb-2">Puoi generarla gratuitamente su Google AI Studio.</p>
+                <a href="https://aistudio.google.com/app/apikey" target="_blank" class="inline-flex items-center gap-1 text-indigo-600 font-bold hover:text-indigo-800 hover:underline">
+                    Ottieni API Key 
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" /></svg>
+                </a>
+            </div>
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-slate-700 mb-1">Gemini API Key</label>
+                <input type="password" id="geminiKeyInput" placeholder="AIhaSy..." class="w-full border border-slate-300 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+            </div>
+
+            <div class="flex justify-end gap-3">
+                <button onclick="closeSettingsModal()" class="px-4 py-2 rounded-lg text-slate-700 hover:bg-slate-100 font-medium transition-colors">Annulla</button>
+                <button onclick="saveGeminiKey()" class="px-4 py-2 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 font-bold transition-all">Salva</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Generate Commit Modal -->
+    <div id="commitModal" class="fixed inset-0 z-50 flex items-center justify-center hidden">
+        <div class="absolute inset-0 bg-gray-900/75 backdrop-blur-sm" onclick="closeCommitModal()"></div>
+        <div class="bg-white rounded-xl shadow-2xl p-6 w-full max-w-lg relative z-10 h-[80vh] flex flex-col">
+            <div class="flex justify-between items-center mb-2">
+                <h3 class="text-xl font-bold text-slate-900 flex items-center gap-2">
+                     <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-purple-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.384-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />
+                    </svg>
+                    Generatore Commit AI
+                </h3>
+                <button onclick="closeCommitModal()" class="text-slate-400 hover:text-slate-600 transition-colors">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+            <p class="text-sm text-slate-500 mb-4">Seleziona i task completati da includere nel commit.</p>
+            
+            <div id="commitTaskList" class="flex-1 overflow-y-auto border rounded-lg p-2 mb-4 space-y-2 bg-slate-50">
+                <!-- Javascript will populate this -->
+            </div>
+
+            <div class="mb-4">
+                 <label class="block text-sm font-medium text-slate-700 mb-1">Messaggio Generato</label>
+                 <textarea id="generatedCommitMsg" class="w-full border border-slate-300 rounded-lg p-3 h-24 text-sm font-mono bg-slate-800 text-green-400 focus:outline-none focus:ring-2 focus:ring-purple-500" placeholder="Il messaggio apparirà qui..."></textarea>
+            </div>
+
+            <div class="flex justify-between items-center gap-3">
+                 <button onclick="generateCommit()" id="btnGenerate" class="flex-1 px-4 py-2 rounded-lg bg-gradient-to-r from-purple-600 to-indigo-600 text-white hover:opacity-90 font-bold transition-all shadow-lg">
+                    ✨ Genera
+                </button>
+                 <button onclick="copyToClipboard()" class="px-4 py-2 rounded-lg bg-slate-200 text-slate-700 hover:bg-slate-300 font-bold transition-all">
+                    Copia
+                </button>
+            </div>
+            </div>
+             <!-- Bottom close button removed -->
         </div>
     </div>
 
@@ -611,6 +737,212 @@ if (!isset($_GET['project_id'])) {
              overlay.classList.remove('hidden');
         }
     }
+    // Init Flatpickr & Sortable
+    document.addEventListener('DOMContentLoaded', function() {
+        // Init Datepicker (fallback/custom)
+        const datepickers = document.querySelectorAll('[datepicker]');
+        // Flowbite datepicker auto-inits based on attributes, but flatpickr override:
+        // If we use Flowbite's JS, we don't need this block unless we want custom Logic.
+        // We are using Flowbite CDN which auto-inits.
+        
+        // SortableJS Init
+        const el = document.getElementById('taskList');
+        if (el) {
+            Sortable.create(el, {
+                handle: '.drag-handle', // Drag handle selector within list items
+                animation: 150,
+                onEnd: function (evt) {
+                    const itemEl = evt.item;  // dragged HTMLElement
+                    
+                    // Get all task IDs in new order
+                    const tasks = document.querySelectorAll('#taskList > div');
+                    const order = Array.from(tasks).map(task => task.getAttribute('data-id'));
+
+                    // Send to backend
+                    fetch('reorder_tasks.php', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ order: order })
+                    });
+                }
+            });
+        }
+    });
+
+    // --- GEMINI AI & SETTINGS ---
+    const settingsModal = document.getElementById('settingsModal');
+    const commitModal = document.getElementById('commitModal');
+    const geminiKeyInput = document.getElementById('geminiKeyInput');
+    const commitTaskList = document.getElementById('commitTaskList');
+    const generatedCommitMsg = document.getElementById('generatedCommitMsg');
+    const btnGenerate = document.getElementById('btnGenerate');
+
+    function openSettingsModal() {
+        const key = localStorage.getItem('gemini_api_key') || '';
+        geminiKeyInput.value = key;
+        settingsModal.classList.remove('hidden');
+    }
+
+    function closeSettingsModal() {
+        settingsModal.classList.add('hidden');
+    }
+
+    function saveGeminiKey() {
+        const key = geminiKeyInput.value.trim();
+        if (key) {
+            localStorage.setItem('gemini_api_key', key);
+            alert('Chiave salvata nel browser!');
+            closeSettingsModal();
+        } else {
+            alert('Inserisci una chiave valida.');
+        }
+    }
+
+    function openCommitModal() {
+        if (!localStorage.getItem('gemini_api_key')) {
+            if(confirm("Devi prima impostare la tua Gemini API Key. Vuoi farlo ora?")) {
+                openSettingsModal();
+            }
+            return;
+        }
+
+        // 1. Gather tasks (only completed?)
+        // Let's get ALL tasks visible in the DOM
+        const tasks = [];
+        document.querySelectorAll('[id^="task-"]').forEach(el => {
+            const id = el.getAttribute('id').replace('task-', '');
+            // Find title text in the span
+            const titleEl = el.querySelector('.task-title'); 
+            if (!titleEl) return; // Skip if finding fails (safety)
+            const isDone = titleEl.classList.contains('line-through'); // Check style to know if done
+            const text = titleEl.innerText.trim();
+            
+            // Only show completed tasks by default? Or all? User said "once done".
+            // Let's show all but pre-check completed ones?
+            if (isDone) {
+                 tasks.push({ id, text });
+            }
+        });
+
+        if (tasks.length === 0) {
+            alert("Nessun task completato trovato nella pagina.");
+            return;
+        }
+
+        // 2. Populate List
+        commitTaskList.innerHTML = tasks.map(t => `
+            <label class="flex items-center gap-3 p-2 hover:bg-white rounded cursor-pointer border border-transparent hover:border-indigo-100">
+                <input type="checkbox" value="${t.text}" checked class="w-4 h-4 text-purple-600 rounded focus:ring-purple-500">
+                <span class="text-sm text-slate-700 truncate">${t.text}</span>
+            </label>
+        `).join('');
+
+        generatedCommitMsg.value = '';
+        commitModal.classList.remove('hidden');
+    }
+
+    function closeCommitModal() {
+        commitModal.classList.add('hidden');
+    }
+
+    async function getAvailableModel(apiKey) {
+        try {
+            const listResponse = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`);
+            const data = await listResponse.json();
+            
+            if (data.error) throw new Error(data.error.message);
+            if (!data.models) throw new Error("Nessun modello trovato.");
+
+            // Priority list
+            const priorities = [
+                'models/gemini-1.5-flash',
+                'models/gemini-1.5-flash-latest',
+                'models/gemini-1.5-pro',
+                'models/gemini-1.5-pro-latest',
+                'models/gemini-1.0-pro',
+                'models/gemini-pro'
+            ];
+
+            // 1. Check for priority match
+            for (const preferred of priorities) {
+                if (data.models.find(m => m.name === preferred && m.supportedGenerationMethods.includes('generateContent'))) {
+                    return preferred.replace('models/', '');
+                }
+            }
+
+            // 2. Fallback: first available gemini model that supports generation
+            const fallback = data.models.find(m => m.name.includes('gemini') && m.supportedGenerationMethods.includes('generateContent'));
+            if (fallback) return fallback.name.replace('models/', '');
+
+            throw new Error("Nessun modello Gemini compatibile trovato.");
+
+        } catch (e) {
+            console.warn("Model discovery failed, falling back to default.", e);
+            return 'gemini-1.5-flash'; // Hard fallback
+        }
+    }
+
+    async function generateCommit() {
+        const checkboxes = commitTaskList.querySelectorAll('input[type="checkbox"]:checked');
+        const selectedTitles = Array.from(checkboxes).map(cb => cb.value);
+
+        if (selectedTitles.length === 0) {
+            alert("Seleziona almeno un task.");
+            return;
+        }
+
+        const apiKey = localStorage.getItem('gemini_api_key');
+        const prompt = `Act as a senior developer. Generate a single comprehensive Conventional Commit message (type(scope): description) IN ITALIAN for these completed tasks: \n- ${selectedTitles.join('\n- ')}\n\nOnly output the git commit command like: git commit -m "..."`;
+
+        btnGenerate.disabled = true;
+        btnGenerate.innerHTML = "Ricerca Modello...";
+        generatedCommitMsg.value = "Controllo modelli disponibili...";
+
+        try {
+            // Dynamic Model Selection
+            const modelName = await getAvailableModel(apiKey);
+            
+            btnGenerate.innerHTML = "Generazione...";
+            generatedCommitMsg.value = `Modello trovato: ${modelName}. Generazione in corso...`;
+
+            const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    contents: [{ parts: [{ text: prompt }] }]
+                })
+            });
+
+            const data = await response.json();
+            
+            if (data.error) {
+                // If 429 (Quota), show clear message
+                if (data.error.code === 429) {
+                     throw new Error("Quota esaurita per questo modello. Riprova più tardi.");
+                }
+                throw new Error(data.error.message);
+            }
+
+            const result = data.candidates[0].content.parts[0].text;
+            generatedCommitMsg.value = result.trim();
+
+        } catch (error) {
+            console.error(error);
+            generatedCommitMsg.value = "Errore: " + error.message;
+        } finally {
+            btnGenerate.disabled = false;
+            btnGenerate.innerHTML = "✨ Genera";
+        }
+    }
+
+    function copyToClipboard() {
+        const text = generatedCommitMsg.value;
+        if (!text) return;
+        navigator.clipboard.writeText(text).then(() => {
+            alert("Copiato!");
+        });
+    }
+
     </script>
 </body>
 </html>
