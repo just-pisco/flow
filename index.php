@@ -521,6 +521,19 @@ $apiKey = $user['gemini_api_key'] ?? null;
                 transform: translateX(-100%);
             }
         }
+
+        /* Drag & Drop Styling */
+        .sortable-ghost {
+            opacity: 0.4;
+            background-color: #f3f4f6; /* gray-100 */
+            border: 2px dashed #6366f1; /* indigo-500 */
+        }
+        .sortable-drag {
+            cursor: grabbing;
+        }
+        .sortable-chosen {
+            background-color: #e0e7ff; /* indigo-50 */
+        }
     </style>
 </head>
     <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
@@ -880,6 +893,9 @@ $apiKey = $user['gemini_api_key'] ?? null;
             Sortable.create(el, {
                 handle: '.drag-handle', // Drag handle selector within list items
                 animation: 150,
+                ghostClass: 'sortable-ghost',  // Class name for the drop placeholder
+                chosenClass: 'sortable-chosen',  // Class name for the chosen item
+                dragClass: 'sortable-drag',  // Class name for the dragging item
                 onEnd: function (evt) {
                     const itemEl = evt.item;  // dragged HTMLElement
                     
