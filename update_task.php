@@ -14,6 +14,11 @@ if (isset($data['id'])) {
         $params['stato'] = $data['completato'] ? 'completato' : 'da_fare';
     }
 
+    if (isset($data['stato'])) { // Direct status update
+        $updates[] = "stato = :stato_direct";
+        $params['stato_direct'] = $data['stato'];
+    }
+
     if (isset($data['titolo'])) {
         $updates[] = "titolo = :titolo";
         $params['titolo'] = trim($data['titolo']);
@@ -38,22 +43,49 @@ if (isset($data['id'])) {
         $params['descrizione'] = $data['descrizione'];
     }
 
-    if (empty($updates)) {
+    // Handle Assignees (Separate from main UPDATE)
+    $updateAssignees = false;
+    if (isset($data['assignees']) && is_array($data['assignees'])) {
+        $updateAssignees = true;
+    }
+
+    if (empty($updates) && !$updateAssignees) {
         echo json_encode(['success' => false, 'error' => 'No updates provided']);
         exit;
     }
 
-    $sql = "UPDATE tasks SET " . implode(', ', $updates) . " WHERE id = :id";
-    $stmt = $pdo->prepare($sql);
+    // Execute Main Update if needed
+    if (!empty($updates)) {
+        $sql = "UPDATE tasks SET " . implode(', ', $updates) . " WHERE id = :id";
+        $stmt = $pdo->prepare($sql);
+        if (!$stmt->execute($params)) {
+             echo json_encode(['success' => false, 'error' => 'Main update failed']);
+             exit;
+        }
+    }
 
-    if ($stmt->execute($params)) {
-        // Aggiorna data_modifica del progetto
-        $updProject = $pdo->prepare("UPDATE projects SET data_modifica = NOW() WHERE id = (SELECT project_id FROM tasks WHERE id = ?)");
-        $updProject->execute([$id]);
+    // Execute Assignees Update
+    if ($updateAssignees) {
+        // Clear existing keys for this task (Simple approach: delete all, insert new)
+        $del = $pdo->prepare("DELETE FROM task_assignments WHERE task_id = ?");
+        $del->execute([$id]);
 
-        echo json_encode(['success' => true]);
-    } else {
-        echo json_encode(['success' => false, 'error' => 'Update failed']);
+        $ins = $pdo->prepare("INSERT IGNORE INTO task_assignments (task_id, user_id) VALUES (?, ?)");
+        foreach ($data['assignees'] as $userId) {
+            $ins->execute([$id, $userId]);
+        }
+    }
+
+    // Update Project timestamp
+    $updProject = $pdo->prepare("UPDATE projects SET data_modifica = NOW() WHERE id = (SELECT project_id FROM tasks WHERE id = ?)");
+    $updProject->execute([$id]);
+
+    echo json_encode(['success' => true]);
+    exit; // Stop further execution since we handled logic manually above
+
+    /* Original Logic Block Skipped */
+    if (false) {
+}
     }
 }
 ?>
