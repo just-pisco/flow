@@ -42,11 +42,19 @@ $apiKey = $user['gemini_api_key'] ?? null;
         <div id="sidebarOverlay" onclick="toggleSidebar()"
             class="fixed inset-0 bg-black bg-opacity-50 z-40 hidden md:hidden glass"></div>
         <aside id="sidebar"
-            class="fixed inset-y-0 left-0 z-50 w-64 bg-slate-900 text-white p-6 transform -translate-x-full md:translate-x-0 md:relative transition-transform duration-300 ease-in-out shadow-xl">
+            class="fixed inset-y-0 left-0 z-50 w-64 bg-slate-900 text-white p-6 transition-transform duration-300 ease-in-out shadow-xl flex flex-col flex-shrink-0 mobile-closed md:relative md:inset-auto">
 
-            <div class="flex justify-between items-center md:block">
+            <div class="flex justify-between items-center h-10">
                 <a href="index.php"
                     class="text-2xl font-bold tracking-tight text-indigo-400 no-underline hover:text-indigo-300 transition block">Flow.</a>
+                
+                <!-- Close Button (Desktop & Mobile) -->
+                <button onclick="toggleSidebar()" id="sidebarCloseBtn" class="text-slate-400 hover:text-white focus:outline-none hidden md:block">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+
                 <button onclick="toggleSidebar()" class="md:hidden text-slate-400 hover:text-white">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
                         stroke="currentColor">
@@ -107,7 +115,7 @@ $apiKey = $user['gemini_api_key'] ?? null;
 
         <main class="flex-1 p-8 overflow-y-auto relative">
 
-            <button onclick="toggleSidebar()" class="md:hidden absolute top-4 left-4 z-30 p-2 text-slate-600 focus:outline-none">
+            <button onclick="toggleSidebar()" id="desktopHamburger" class="absolute top-4 left-4 z-30 p-2 text-slate-600 focus:outline-none transition-transform hover:scale-110 md:hidden">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
                 </svg>
@@ -133,8 +141,8 @@ $apiKey = $user['gemini_api_key'] ?? null;
                 }
             } ?>
 
-            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b pb-6 pt-10 md:pt-0">
-                <div class="flex items-center gap-4">
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b pb-6 pt-10 md:pt-12">
+                <div class="flex items-center gap-4 md:pl-0">
                     <h2 class="text-3xl font-bold text-slate-800 tracking-tight" id="projectTitleDisplay"><?php echo htmlspecialchars($project_name); ?></h2>
                     <?php if ($project_id): ?>
                             <div class="flex items-center gap-2">
@@ -154,7 +162,7 @@ $apiKey = $user['gemini_api_key'] ?? null;
                 
                 <!-- Gemini Magic Button -->
                 <?php if ($project_id): ?>
-                    <button onclick="openCommitModal()" class="flex items-center gap-2 bg-gradient-to-r from-purple-500 to-indigo-600 text-white px-4 py-2 rounded-lg font-bold hover:shadow-lg hover:opacity-90 transition transform hover:-translate-y-0.5 text-sm">
+                    <button onclick="openCommitModal()" class="flex items-center gap-2 bg-gradient-to-r from-purple-700 to-indigo-800 text-white px-4 py-2 rounded-lg font-bold hover:shadow-xl hover:opacity-100 transition transform hover:-translate-y-0.5 text-sm shadow-lg border border-indigo-500/50">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
                         </svg>
@@ -375,7 +383,7 @@ $apiKey = $user['gemini_api_key'] ?? null;
                 </svg>
                 Impostazioni AI Gemini
             </h3>
-            <p class="text-sm text-slate-500 mb-4">Inserisci la tua API Key di Google Gemini. Verrà salvata solo nel tuo browser.</p>
+            <p class="text-sm text-slate-500 mb-4">Inserisci la tua API Key di Google Gemini. Verrà salvata in modo sicuro nel tuo account.</p>
             
             <div class="bg-indigo-50 text-indigo-700 p-4 rounded-lg text-sm mb-4 border border-indigo-100">
                 <p class="font-bold mb-1">Non hai una chiave?</p>
@@ -441,7 +449,7 @@ $apiKey = $user['gemini_api_key'] ?? null;
             </div>
             <p class="text-sm text-slate-500 mb-4">Seleziona i task completati da includere nel commit.</p>
             
-            <div id="commitTaskList" class="flex-1 overflow-y-auto border rounded-lg p-2 mb-4 space-y-2 bg-slate-50">
+            <div id="commitTaskList" class="flex-1 overflow-y-auto border rounded-lg p-2 mb-4 space-y-2 bg-slate-50 min-h-[150px]">
                 <!-- Javascript will populate this -->
             </div>
 
@@ -463,8 +471,79 @@ $apiKey = $user['gemini_api_key'] ?? null;
         </div>
     </div>
 
+    <!-- Confirm Delete Key Modal -->
+    <div id="confirmKeyDeleteModal" class="fixed inset-0 z-50 flex items-center justify-center hidden">
+        <div class="absolute inset-0 bg-gray-900/75 backdrop-blur-sm" onclick="closeConfirmKeyDeleteModal()"></div>
+        <div class="bg-white rounded-xl shadow-2xl p-6 w-full max-w-sm relative z-10 scale-95 opacity-0 transition-all duration-300" id="confirmKeyDeleteContent">
+            <h3 class="text-lg font-bold text-slate-900 mb-2">Conferma Eliminazione</h3>
+            <p class="text-slate-600 mb-6">Sei sicuro di voler eliminare la tua API Key dal database? Non potrai più usare le funzioni AI finché non ne inserirai una nuova.</p>
+            <div class="flex justify-end gap-3">
+                <button onclick="closeConfirmKeyDeleteModal()" class="px-4 py-2 rounded-lg text-slate-700 hover:bg-slate-100 font-medium transition-colors">Annulla</button>
+                <button onclick="executeDeleteKey()" class="px-4 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700 font-bold transition-all shadow-md">Elimina</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/flowbite/2.2.1/flowbite.min.css" rel="stylesheet" />
+    <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .toast-success { background: linear-gradient(to right, #00b09b, #96c93d) !important; }
+        .toast-error { background: linear-gradient(to right, #ff5f6d, #ffc371) !important; }
+        
+        /* FORCE SIDEBAR VISIBILITY ON DESKTOP */
+        @media (min-width: 768px) {
+            #sidebar {
+                transition: width 0.3s ease-in-out, padding 0.3s ease-in-out;
+            }
+            #sidebar.desktop-closed {
+                width: 0 !important;
+                padding: 0 !important;
+                overflow: hidden !important;
+            }
+        }
+        
+        /* MOBILE ONLY: Hide sidebar by default */
+        @media (max-width: 767px) {
+            .mobile-closed {
+                transform: translateX(-100%);
+            }
+        }
+    </style>
+</head>
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/flowbite/2.2.1/datepicker.min.js"></script>
     <script>
+    
+    // Toast Helper
+    function showToast(message, type = 'success') {
+        Toastify({
+            text: message,
+            duration: 3000,
+            gravity: "top", // `top` or `bottom`
+            position: "right", // `left`, `center` or `right`
+            className: type === 'success' ? "toast-success" : "toast-error",
+            stopOnFocus: true, // Prevents dismissing of toast on hover
+            style: {
+                borderRadius: "8px",
+                boxShadow: "0 44px 6px -1px rgba(0, 0, 0, 0.1)",
+                fontSize: "14px",
+                fontWeight: "600"
+            }
+        }).showToast();
+    }
     
     let currentDeleteTaskId = null;
     const modal = document.getElementById('deleteModal');
@@ -759,13 +838,32 @@ $apiKey = $user['gemini_api_key'] ?? null;
     function toggleSidebar() {
         const sidebar = document.getElementById('sidebar');
         const overlay = document.getElementById('sidebarOverlay');
+        const desktopHamburger = document.getElementById('desktopHamburger');
+        const sidebarCloseBtn = document.getElementById('sidebarCloseBtn');
         
-        sidebar.classList.toggle('-translate-x-full');
-        
-        if (sidebar.classList.contains('-translate-x-full')) {
-             overlay.classList.add('hidden');
+        // Detect Mobile vs Desktop
+        if (window.innerWidth >= 768) {
+            // Desktop Logic: Toggle Width
+            sidebar.classList.toggle('desktop-closed');
+            
+            // Toggle Button Visibility based on state
+            if (sidebar.classList.contains('desktop-closed')) {
+                // Sidebar Closed -> Show Hamburger (Remove md:hidden)
+                desktopHamburger.classList.remove('md:hidden');
+            } else {
+                // Sidebar Open -> Hide Hamburger (Show Close inside Sidebar)
+                desktopHamburger.classList.add('md:hidden');
+            }
+            
         } else {
-             overlay.classList.remove('hidden');
+            // Mobile Logic
+            sidebar.classList.toggle('mobile-closed');
+            
+            if (sidebar.classList.contains('mobile-closed')) {
+                 overlay.classList.add('hidden');
+            } else {
+                 overlay.classList.remove('hidden');
+            }
         }
     }
     // Init Flatpickr & Sortable
@@ -835,34 +933,85 @@ $apiKey = $user['gemini_api_key'] ?? null;
             .then(res => res.json())
             .then(data => {
                 if (data.success) {
-                    alert('Chiave salvata nel tuo account!');
-                    location.reload(); // Reload to update UI state
+                    showToast('Chiave salvata nel tuo account!', 'success');
+                    setTimeout(() => location.reload(), 1000); 
                 } else {
-                    alert('Errore salvataggio: ' + data.error);
+                    showToast('Errore salvataggio: ' + data.error, 'error');
                 }
             });
         } else {
-            alert('Inserisci una chiave valida.');
+            showToast('Inserisci una chiave valida.', 'error');
         }
     }
     
     function deleteGeminiKey() {
-         if(confirm("Sei sicuro di voler rimuovere la tua API Key? Non potrai più usare le funzioni AI.")) {
-            fetch('api_key_manager.php', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ action: 'delete' })
-            })
-            .then(res => res.json())
-            .then(data => {
-                if (data.success) {
-                    alert('Chiave rimossa.');
-                    location.reload();
-                } else {
-                     alert('Errore: ' + data.error);
-                }
-            });
-         }
+        // Open Modal instead of confirm() alert
+        const modal = document.getElementById('confirmKeyDeleteModal');
+        const content = document.getElementById('confirmKeyDeleteContent');
+        
+        modal.classList.remove('hidden');
+        setTimeout(() => {
+            content.classList.remove('scale-95', 'opacity-0');
+            content.classList.add('scale-100', 'opacity-100');
+        }, 10);
+    }
+    
+    function closeConfirmKeyDeleteModal() {
+        const modal = document.getElementById('confirmKeyDeleteModal');
+        const content = document.getElementById('confirmKeyDeleteContent');
+        
+        content.classList.remove('scale-100', 'opacity-100');
+        content.classList.add('scale-95', 'opacity-0');
+        setTimeout(() => {
+            modal.classList.add('hidden');
+        }, 300);
+    }
+
+    function executeDeleteKey() {
+        fetch('api_key_manager.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action: 'delete' })
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                showToast('Chiave rimossa.', 'success');
+                setTimeout(() => location.reload(), 1000);
+            } else {
+                    showToast('Errore: ' + data.error, 'error');
+            }
+            closeConfirmKeyDeleteModal();
+        });
+    }
+    
+    function closeConfirmKeyDeleteModal() {
+        const modal = document.getElementById('confirmKeyDeleteModal');
+        const content = document.getElementById('confirmKeyDeleteContent');
+        
+        content.classList.remove('scale-100', 'opacity-100');
+        content.classList.add('scale-95', 'opacity-0');
+        setTimeout(() => {
+            modal.classList.add('hidden');
+        }, 300);
+    }
+
+    function executeDeleteKey() {
+        fetch('api_key_manager.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action: 'delete' })
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                showToast('Chiave rimossa.', 'success');
+                setTimeout(() => location.reload(), 1000);
+            } else {
+                    showToast('Errore: ' + data.error, 'error');
+            }
+            closeConfirmKeyDeleteModal();
+        });
     }
 
     function openCommitModal() {
@@ -893,7 +1042,7 @@ $apiKey = $user['gemini_api_key'] ?? null;
         });
 
         if (tasks.length === 0) {
-            alert("Nessun task completato trovato nella pagina.");
+            showToast("Nessun task completato trovato nella pagina.", "error");
             return;
         }
 
@@ -955,7 +1104,7 @@ $apiKey = $user['gemini_api_key'] ?? null;
         const selectedTitles = Array.from(checkboxes).map(cb => cb.value);
 
         if (selectedTitles.length === 0) {
-            alert("Seleziona almeno un task.");
+            showToast("Seleziona almeno un task.", "error");
             return;
         }
 
@@ -1007,7 +1156,7 @@ $apiKey = $user['gemini_api_key'] ?? null;
         const text = generatedCommitMsg.value;
         if (!text) return;
         navigator.clipboard.writeText(text).then(() => {
-            alert("Copiato!");
+            showToast("Messaggio copiato!", "success");
         });
     }
 
