@@ -129,6 +129,14 @@ try {
     )");
     echo "- Task Assignments table checked.\n";
 
+    // 4. Backfill Project Owners into project_members
+    echo "Backfilling project owners...\n";
+    // Insert owners into project_members if they don't exist
+    $sqlBackfill = "INSERT IGNORE INTO project_members (project_id, user_id, role)
+                    SELECT id, user_id, 'owner' FROM projects";
+    $pdo->exec($sqlBackfill);
+    echo "- Project owners backfilled.\n";
+
     echo "\n<strong style='color:green'>SUCCESS! Database setup completed.</strong>";
     echo "\nDelete this file (setup_prod.php) from the server after use for security.";
 
