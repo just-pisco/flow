@@ -288,8 +288,9 @@ $apiKey = $user['gemini_api_key'] ?? null;
                 <?php endif; ?>
 
                 <div class="relative w-full md:w-64">
-                    <input type="text" id="taskSearch" name="search_tasks_unique" autocomplete="off"
-                        placeholder="Cerca task..." onkeyup="searchTasks()"
+                    <input type="text" id="taskSearch" name="search_tasks_unique_v2" autocomplete="off"
+                        placeholder="Cerca task..." readonly onfocus="this.removeAttribute('readonly')"
+                        onkeyup="searchTasks()"
                         class="w-full bg-white border border-slate-200 rounded-full px-4 py-2 text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
                 </div>
             </div>
