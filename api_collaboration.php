@@ -18,14 +18,40 @@ try {
     if ($method === 'GET') {
         if ($action === 'search_users') {
             // Search users by partial username to invite
+            // Search users: Team Members OR Friends
             $query = $_GET['q'] ?? '';
-            if (strlen($query) < 3) {
-                echo json_encode(['success' => true, 'data' => []]);
-                exit;
+            // If query is empty, maybe return suggestion of recent interactions or team members?
+            // For now, require query or just list all visible users if query is empty?
+            // User said: "suggeriti o autocompletati". Empty query -> show team members is good UX.
+
+            $sql = "
+                SELECT DISTINCT u.id, u.username, u.nome, u.cognome, u.profile_image
+                FROM users u
+                LEFT JOIN team_members tm_me ON tm_me.user_id = :me
+                LEFT JOIN team_members tm_other ON tm_other.team_id = tm_me.team_id AND tm_other.user_id = u.id
+                LEFT JOIN friendships f ON (
+                    (f.requester_id = :me AND f.receiver_id = u.id) OR 
+                    (f.requester_id = u.id AND f.receiver_id = :me)
+                ) AND f.status = 'accepted'
+                WHERE u.id != :me
+                AND (
+                    tm_other.id IS NOT NULL  -- Is in one of my teams
+                    OR 
+                    f.id IS NOT NULL         -- Is my friend
+                )
+            ";
+
+            $params = [':me' => $currentUserId];
+
+            if (strlen($query) > 0) {
+                $sql .= " AND u.username LIKE :q";
+                $params[':q'] = "%$query%";
             }
 
-            $stmt = $pdo->prepare("SELECT id, username FROM users WHERE username LIKE ? AND id != ? LIMIT 10");
-            $stmt->execute(["%$query%", $currentUserId]);
+            $sql .= " LIMIT 20";
+
+            $stmt = $pdo->prepare($sql);
+            $stmt->execute($params);
             echo json_encode(['success' => true, 'data' => $stmt->fetchAll(PDO::FETCH_ASSOC)]);
 
         } elseif ($action === 'list_members') {
@@ -46,7 +72,7 @@ try {
 
             // Fetch members with roles
             $stmt = $pdo->prepare("
-                SELECT u.id, u.username, pm.role 
+                SELECT u.id, u.username, u.nome, u.cognome, u.profile_image, pm.role 
                 FROM project_members pm
                 JOIN users u ON pm.user_id = u.id
                 WHERE pm.project_id = ?
@@ -69,7 +95,16 @@ try {
             $role = $stmt->fetchColumn();
 
             if ($role !== 'owner') {
-                throw new Exception("Solo il proprietario può aggiungere membri.");
+                // Fallback: Check if user is the actual project creator (but missing from members table)
+                $stmtOwner = $pdo->prepare("SELECT user_id FROM projects WHERE id = ?");
+                $stmtOwner->execute([$projectId]);
+                $ownerId = $stmtOwner->fetchColumn();
+
+                if ($ownerId != $currentUserId) {
+                    throw new Exception("Solo il proprietario può aggiungere membri.");
+                }
+
+                // Optional: Auto-fix membership here if we wanted to, but let's just allow the action.
             }
 
             // 2. Find User ID

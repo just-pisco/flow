@@ -23,6 +23,17 @@ $stmt = $pdo->prepare("SELECT gemini_api_key FROM users WHERE id = ?");
 $stmt->execute([$_SESSION['user_id']]);
 $user = $stmt->fetch();
 $apiKey = $user['gemini_api_key'] ?? null;
+
+// Fetch Global Role and Team Admin status
+$stmt = $pdo->prepare("SELECT global_role FROM users WHERE id = ?");
+$stmt->execute([$_SESSION['user_id']]);
+$userGlobalRole = $stmt->fetchColumn();
+
+// Check if is admin of ANY team
+$stmt = $pdo->prepare("SELECT 1 FROM team_members WHERE user_id = ? AND role = 'admin' LIMIT 1");
+$stmt->execute([$_SESSION['user_id']]);
+$isAnyTeamAdmin = $stmt->fetchColumn();
+
 ?>
 <!DOCTYPE html>
 <html lang="it">
@@ -84,100 +95,10 @@ $apiKey = $user['gemini_api_key'] ?? null;
             return $output;
         }
         ?>
-        <div id="sidebarOverlay" onclick="toggleSidebar()"
-            class="fixed inset-0 bg-black bg-opacity-50 z-40 hidden md:hidden glass"></div>
-        <aside id="sidebar"
-            class="fixed inset-y-0 left-0 z-50 w-64 bg-slate-900 text-white p-6 transition-transform duration-300 ease-in-out shadow-xl flex flex-col flex-shrink-0 mobile-closed md:relative md:inset-auto">
 
-            <div class="flex justify-between items-center h-10">
-                <a href="index.php"
-                    class="text-2xl font-bold tracking-tight text-indigo-400 no-underline hover:text-indigo-300 transition block">Flow.</a>
 
-                <!-- Close Button (Desktop & Mobile) -->
-                <button onclick="toggleSidebar()" id="sidebarCloseBtn"
-                    class="text-slate-400 hover:text-white focus:outline-none hidden md:block">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
-                        stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                </button>
+        <?php include 'includes/sidebar.php'; ?>
 
-                <button onclick="toggleSidebar()" class="md:hidden text-slate-400 hover:text-white">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
-                        stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                </button>
-            </div>
-
-            <nav class="mt-10">
-                <div class="flex justify-between items-center mb-4">
-                    <p class="text-xs uppercase text-slate-500 font-semibold tracking-wider">Progetti</p>
-                </div>
-
-                <form action="add_project.php" method="POST" class="mb-6">
-                    <input type="text" name="nome_progetto" placeholder="Nuovo progetto..."
-                        class="w-full bg-slate-800 text-sm border-none rounded p-2 focus:ring-2 focus:ring-indigo-500 text-white">
-                </form>
-
-                <ul class="space-y-2">
-                    <?php
-                    // Recuperiamo i progetti dal DB
-                    // Recuperiamo i progetti dal DB (Owner o Membro)
-                    $stmt = $pdo->prepare("
-                        SELECT p.*, pm.role 
-                        FROM projects p 
-                        JOIN project_members pm ON p.id = pm.project_id 
-                        WHERE pm.user_id = ? 
-                        ORDER BY p.data_modifica DESC
-                    ");
-                    $stmt->execute([$_SESSION['user_id']]);
-                    while ($row = $stmt->fetch()) {
-                        $activeClass = (isset($_GET['project_id']) && $_GET['project_id'] == $row['id']) ? 'bg-slate-800 border-indigo-500' : 'border-transparent';
-                        echo "<li class='hover:bg-slate-800 p-2 rounded-md cursor-pointer transition-colors border-l-4 $activeClass'>";
-                        echo "<a href='index.php?project_id={$row['id']}' class='block w-full text-white no-underline'>";
-                        echo htmlspecialchars($row['nome']);
-                        echo "</a></li>";
-                    }
-                    ?>
-                </ul>
-            </nav>
-            </nav>
-
-            <div class="absolute bottom-6 left-6 right-6 space-y-2">
-                <a href="export_data.php"
-                    class="flex items-center gap-3 text-slate-400 hover:text-white transition-colors p-2 rounded-md hover:bg-slate-800">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
-                        stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                    </svg>
-                    <span class="font-medium text-sm">Backup Dati</span>
-                </a>
-                <button onclick="openSettingsModal()"
-                    class="flex items-center gap-3 text-slate-400 hover:text-indigo-400 transition-colors p-2 rounded-md hover:bg-slate-800 w-full text-left">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
-                        stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                    </svg>
-                    <span class="font-medium text-sm">Impostazioni</span>
-                </button>
-                <a href="logout.php"
-                    class="flex items-center gap-3 text-slate-400 hover:text-white transition-colors p-2 rounded-md hover:bg-slate-800">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
-                        stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                    </svg>
-                    <span class="font-medium text-sm">Esci</span>
-                </a>
-            </div>
-        </aside>
 
         <main class="flex-1 p-8 overflow-y-auto relative">
 
@@ -186,8 +107,8 @@ $apiKey = $user['gemini_api_key'] ?? null;
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
                     stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
-                </svg>
             </button>
+            <?php include 'includes/header_profile_widget.php'; ?>
             <?php
             $project_id = $_GET['project_id'] ?? null;
             $project_name = "Seleziona un progetto";
@@ -884,25 +805,8 @@ $apiKey = $user['gemini_api_key'] ?? null;
             background: linear-gradient(to right, #ff5f6d, #ffc371) !important;
         }
 
-        /* FORCE SIDEBAR VISIBILITY ON DESKTOP */
-        @media (min-width: 768px) {
-            #sidebar {
-                transition: width 0.3s ease-in-out, padding 0.3s ease-in-out;
-            }
+        /* Sidebar CSS moved to includes/sidebar.php */
 
-            #sidebar.desktop-closed {
-                width: 0 !important;
-                padding: 0 !important;
-                overflow: hidden !important;
-            }
-        }
-
-        /* MOBILE ONLY: Hide sidebar by default */
-        @media (max-width: 767px) {
-            .mobile-closed {
-                transform: translateX(-100%);
-            }
-        }
 
         /* Drag & Drop Styling */
         .sortable-ghost {
@@ -924,28 +828,14 @@ $apiKey = $user['gemini_api_key'] ?? null;
     </style>
     </head>
     <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
+    <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
+    <script src="js/shared.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/flowbite/2.2.1/datepicker.min.js"></script>
     <script>
-
-        // Toast Helper
-        function showToast(message, type = 'success') {
-            Toastify({
-                text: message,
-                duration: 3000,
-                gravity: "top", // `top` or `bottom`
-                position: "right", // `left`, `center` or `right`
-                className: type === 'success' ? "toast-success" : "toast-error",
-                stopOnFocus: true, // Prevents dismissing of toast on hover
-                style: {
-                    borderRadius: "8px",
-                    boxShadow: "0 44px 6px -1px rgba(0, 0, 0, 0.1)",
-                    fontSize: "14px",
-                    fontWeight: "600"
-                }
-            }).showToast();
-        }
-
         let currentDeleteTaskId = null;
+
+
+
         const modal = document.getElementById('deleteModal');
         const backdrop = document.getElementById('modalBackdrop');
         const content = document.getElementById('modalContent');
@@ -1404,37 +1294,8 @@ $apiKey = $user['gemini_api_key'] ?? null;
                 });
         }
 
-        function toggleSidebar() {
-            const sidebar = document.getElementById('sidebar');
-            const overlay = document.getElementById('sidebarOverlay');
-            const desktopHamburger = document.getElementById('desktopHamburger');
-            const sidebarCloseBtn = document.getElementById('sidebarCloseBtn');
+        // Toggle Sidebar function moved to js/shared.js
 
-            // Detect Mobile vs Desktop
-            if (window.innerWidth >= 768) {
-                // Desktop Logic: Toggle Width
-                sidebar.classList.toggle('desktop-closed');
-
-                // Toggle Button Visibility based on state
-                if (sidebar.classList.contains('desktop-closed')) {
-                    // Sidebar Closed -> Show Hamburger (Remove md:hidden)
-                    desktopHamburger.classList.remove('md:hidden');
-                } else {
-                    // Sidebar Open -> Hide Hamburger (Show Close inside Sidebar)
-                    desktopHamburger.classList.add('md:hidden');
-                }
-
-            } else {
-                // Mobile Logic
-                sidebar.classList.toggle('mobile-closed');
-
-                if (sidebar.classList.contains('mobile-closed')) {
-                    overlay.classList.add('hidden');
-                } else {
-                    overlay.classList.remove('hidden');
-                }
-            }
-        }
         // Init Flatpickr & Sortable
         document.addEventListener('DOMContentLoaded', function () {
             // Init Datepicker (fallback/custom)
@@ -1942,8 +1803,11 @@ $apiKey = $user['gemini_api_key'] ?? null;
                     if (data.data && data.data.length > 0) {
                         data.data.forEach(u => {
                             const div = document.createElement('div');
-                            div.className = "p-3 hover:bg-slate-50 cursor-pointer text-sm text-slate-700 border-b last:border-0 border-slate-50";
-                            div.textContent = u.username;
+                            div.className = "flex items-center gap-3 p-3 hover:bg-slate-50 cursor-pointer text-sm text-slate-700 border-b last:border-0 border-slate-50";
+                            div.innerHTML = `
+                                ${getAvatarHtml(u, 'w-8 h-8', 'text-xs')}
+                                <span>${u.username}</span>
+                            `;
                             div.onclick = () => addMember(u.username);
                             userSearchResults.appendChild(div);
                         });
@@ -1973,24 +1837,7 @@ $apiKey = $user['gemini_api_key'] ?? null;
                 });
         }
 
-        function removeMember(userId) {
-            if (!confirm("Rimuovere questo membro?")) return;
-
-            fetch('api_collaboration.php?action=remove_member', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ project_id: CURRENT_PROJECT_ID, user_id: userId })
-            })
-                .then(res => res.json())
-                .then(data => {
-                    if (data.success) {
-                        showToast('Membro rimosso.', 'success');
-                        loadProjectMembers();
-                    } else {
-                        showToast(data.error, 'error');
-                    }
-                });
-        }
+        // removeMember old function replaced by modal logic
 
         function loadProjectMembers() {
             fetch(`api_collaboration.php?action=list_members&project_id=${CURRENT_PROJECT_ID}`)
@@ -2008,13 +1855,11 @@ $apiKey = $user['gemini_api_key'] ?? null;
 
                             const removeBtn = m.role === 'owner'
                                 ? '' // Cannot remove owner
-                                : `<button onclick="removeMember(${m.id})" class="text-slate-400 hover:text-red-500 p-1"><svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg></button>`;
+                                : `<button onclick="openRemoveMemberModal(${m.id}, '${m.username}')" class="text-slate-400 hover:text-red-500 p-1"><svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg></button>`;
 
                             div.innerHTML = `
                             <div class="flex items-center gap-3">
-                                <div class="w-8 h-8 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center font-bold text-xs border border-indigo-200">
-                                    ${m.username.substring(0, 2).toUpperCase()}
-                                </div>
+                                ${getAvatarHtml(m, 'w-8 h-8', 'text-xs')}
                                 <div>
                                     <div class="text-sm font-medium text-slate-800">${m.username}</div>
                                 </div>
@@ -2025,6 +1870,69 @@ $apiKey = $user['gemini_api_key'] ?? null;
                             projectMembersList.appendChild(div);
                         });
                     }
+                });
+        }
+    </script>
+    <!-- Remove Member Modal -->
+    <div id="removeMemberModal" class="fixed inset-0 z-[70] flex items-center justify-center hidden">
+        <div class="absolute inset-0 bg-gray-900/75 backdrop-blur-sm" onclick="closeRemoveMemberModal()"></div>
+        <div class="bg-white rounded-xl shadow-2xl p-6 w-full max-w-sm relative z-10 scale-95 opacity-0 transition-all duration-300"
+            id="removeMemberContent">
+            <h3 class="text-lg font-bold text-slate-900 mb-2">Rimuovi Membro</h3>
+            <p class="text-slate-600 mb-6">Sei sicuro di voler rimuovere <strong id="removeMemberNameDisplay"></strong>
+                dal progetto?</p>
+            <input type="hidden" id="removeMemberIdInput">
+            <div class="flex justify-end gap-3">
+                <button onclick="closeRemoveMemberModal()"
+                    class="px-4 py-2 rounded-lg text-slate-700 hover:bg-slate-100 font-medium transition-colors">Annulla</button>
+                <button onclick="executeRemoveMember()"
+                    class="px-4 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700 font-bold transition-all shadow-md">Rimuovi</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Remove Member Modal Logic
+        const removeMemberModal = document.getElementById('removeMemberModal');
+        const removeMemberContent = document.getElementById('removeMemberContent');
+        const removeMemberIdInput = document.getElementById('removeMemberIdInput');
+        const removeMemberNameDisplay = document.getElementById('removeMemberNameDisplay');
+
+        function openRemoveMemberModal(memberId, username) {
+            removeMemberIdInput.value = memberId;
+            removeMemberNameDisplay.textContent = username;
+            removeMemberModal.classList.remove('hidden');
+            // Animation
+            setTimeout(() => {
+                removeMemberContent.classList.remove('scale-95', 'opacity-0');
+                removeMemberContent.classList.add('scale-100', 'opacity-100');
+            }, 10);
+        }
+
+        function closeRemoveMemberModal() {
+            removeMemberContent.classList.remove('scale-100', 'opacity-100');
+            removeMemberContent.classList.add('scale-95', 'opacity-0');
+            setTimeout(() => {
+                removeMemberModal.classList.add('hidden');
+            }, 300);
+        }
+
+        function executeRemoveMember() {
+            const userId = removeMemberIdInput.value;
+            fetch('api_collaboration.php?action=remove_member', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ project_id: CURRENT_PROJECT_ID, user_id: userId })
+            })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success) {
+                        showToast('Membro rimosso.', 'success');
+                        loadProjectMembers();
+                    } else {
+                        showToast(data.error, 'error');
+                    }
+                    closeRemoveMemberModal();
                 });
         }
     </script>

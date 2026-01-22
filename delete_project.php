@@ -11,14 +11,19 @@ if (isset($data['id'])) {
         $pdo->beginTransaction();
 
         // 1. Elimina i task associati (Cascata manuale se non impostata su DB)
-        // This should only delete tasks for projects owned by the user, or rely on project deletion cascade
-        // For now, we assume tasks are deleted if the project is deleted.
+        // 1. Clean up dependencies manualy (if no CASCADE)
+        $stmt = $pdo->prepare("DELETE FROM task_assignments WHERE task_id IN (SELECT id FROM tasks WHERE project_id = ?)");
+        $stmt->execute([$id]);
+
         $stmt = $pdo->prepare("DELETE FROM tasks WHERE project_id = ?");
         $stmt->execute([$id]);
 
-        // 2. Elimina il progetto con controllo utente
+        $stmt = $pdo->prepare("DELETE FROM project_members WHERE project_id = ?");
+        $stmt->execute([$id]);
+
+        // 2. Elimina il progetto con controllo proprietario
         $stmt = $pdo->prepare("DELETE FROM projects WHERE id = :id AND user_id = :user_id");
-        $stmt->execute(['id' => $id, 'user_id' => $user_id]);
+        $stmt->execute(['id' => $id, 'user_id' => $_SESSION['user_id']]);
 
         // Check if a project was actually deleted
         if ($stmt->rowCount() > 0) {

@@ -12,11 +12,22 @@ try {
     $pdo->exec("CREATE TABLE IF NOT EXISTS users (
         id INT AUTO_INCREMENT PRIMARY KEY,
         username VARCHAR(50) NOT NULL UNIQUE,
-        email VARCHAR(100) NOT NULL UNIQUE,
+        email VARCHAR(100) NULL UNIQUE,
         password VARCHAR(255) NOT NULL,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )");
     echo "- Users table checked.\n";
+
+    // MIGRATION: Ensure created_at exists (it might be missing if table created long ago)
+    // REVERTED: User has data_creazione column.
+    /*
+    try {
+        $pdo->query("SELECT created_at FROM users LIMIT 1");
+    } catch (Exception $e) {
+        $pdo->exec("ALTER TABLE users ADD COLUMN created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP");
+        echo "- Added 'created_at' to users.\n";
+    }
+    */
 
     // PROJECTS
     $pdo->exec("CREATE TABLE IF NOT EXISTS projects (
@@ -47,6 +58,17 @@ try {
 
     // 2. Add Missing Columns (Migrations)
 
+    // Users: email (Migration if missing)
+    try {
+        $pdo->query("SELECT email FROM users LIMIT 1");
+        // Check if we need to modify it to be nullable (simple brute force modify)
+        $pdo->exec("ALTER TABLE users MODIFY COLUMN email VARCHAR(100) NULL UNIQUE");
+        echo "- Checked/Modified 'email' in users to be NULL UNIQUE.\n";
+    } catch (Exception $e) {
+        $pdo->exec("ALTER TABLE users ADD COLUMN email VARCHAR(100) NULL UNIQUE");
+        echo "- Added 'email' to users.\n";
+    }
+
     // Users: gemini_api_key
     try {
         $pdo->query("SELECT gemini_api_key FROM users LIMIT 1");
@@ -54,6 +76,38 @@ try {
         $pdo->exec("ALTER TABLE users ADD COLUMN gemini_api_key VARCHAR(255) DEFAULT NULL");
         echo "- Added 'gemini_api_key' to users.\n";
     }
+
+    // Users: global_role
+    try {
+        $pdo->query("SELECT global_role FROM users LIMIT 1");
+    } catch (Exception $e) {
+        $pdo->exec("ALTER TABLE users ADD COLUMN global_role ENUM('superadmin', 'user') DEFAULT 'user'");
+        echo "- Added 'global_role' to users.\n";
+    }
+
+    // Users: nome and cognome
+    try {
+        $pdo->query("SELECT nome FROM users LIMIT 1");
+    } catch (Exception $e) {
+        $pdo->exec("ALTER TABLE users ADD COLUMN nome VARCHAR(50) DEFAULT NULL");
+        echo "- Added 'nome' to users.\n";
+    }
+
+    try {
+        $pdo->query("SELECT cognome FROM users LIMIT 1");
+    } catch (Exception $e) {
+        $pdo->exec("ALTER TABLE users ADD COLUMN cognome VARCHAR(50) DEFAULT NULL");
+        echo "- Added 'cognome' to users.\n";
+    }
+
+    // Users: profile_image
+    try {
+        $pdo->query("SELECT profile_image FROM users LIMIT 1");
+    } catch (Exception $e) {
+        $pdo->exec("ALTER TABLE users ADD COLUMN profile_image VARCHAR(255) DEFAULT NULL");
+        echo "- Added 'profile_image' to users.\n";
+    }
+
 
     // Projects: user_id (Backfill if needed, but handled by create)
     // Projects: data_modifica
@@ -128,6 +182,42 @@ try {
         UNIQUE KEY unique_assignment (task_id, user_id)
     )");
     echo "- Task Assignments table checked.\n";
+
+    // TEAMS
+    $pdo->exec("CREATE TABLE IF NOT EXISTS teams (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        name VARCHAR(100) NOT NULL,
+        created_by INT NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE CASCADE
+    )");
+    echo "- Teams table checked.\n";
+
+    // TEAM MEMBERS
+    $pdo->exec("CREATE TABLE IF NOT EXISTS team_members (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        team_id INT NOT NULL,
+        user_id INT NOT NULL,
+        role ENUM('admin', 'member') DEFAULT 'member',
+        joined_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (team_id) REFERENCES teams(id) ON DELETE CASCADE,
+        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+        UNIQUE KEY unique_team_member (team_id, user_id)
+    )");
+    echo "- Team Members table checked.\n";
+
+    // FRIENDSHIPS
+    $pdo->exec("CREATE TABLE IF NOT EXISTS friendships (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        requester_id INT NOT NULL,
+        receiver_id INT NOT NULL,
+        status ENUM('pending', 'accepted') DEFAULT 'pending',
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (requester_id) REFERENCES users(id) ON DELETE CASCADE,
+        FOREIGN KEY (receiver_id) REFERENCES users(id) ON DELETE CASCADE,
+        UNIQUE KEY unique_friendship (requester_id, receiver_id)
+    )");
+    echo "- Friendships table checked.\n";
 
     // 4. Backfill Project Owners into project_members
     echo "Backfilling project owners...\n";

@@ -17,6 +17,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_POST['nome_progetto'])) {
     if ($stmt->execute(['nome' => $nome, 'user_id' => $user_id])) {
         // Redirect to new project
         $newId = $pdo->lastInsertId();
+
+        // Add owner to project_members
+        $stmtMember = $pdo->prepare("INSERT INTO project_members (project_id, user_id, role) VALUES (?, ?, 'owner')");
+        $stmtMember->execute([$newId, $user_id]);
+
         header("Location: index.php?project_id=" . $newId);
         exit();
     }
