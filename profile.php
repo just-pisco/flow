@@ -47,10 +47,10 @@ if (!isset($_SESSION['user_id'])) {
                         <div class="flex flex-col items-center gap-4 border-b border-slate-100 pb-8">
                             <div class="relative group">
                                 <div id="avatarPreview"
-                                    class="w-32 h-32 rounded-full overflow-hidden bg-slate-100 border-4 border-white shadow-lg flex items-center justify-center text-4xl font-bold text-slate-400">
+                                    class="w-32 h-32 rounded-lg overflow-hidden bg-slate-100 border-4 border-white shadow-lg flex items-center justify-center text-4xl font-bold text-slate-400">
                                     <span>?</span>
                                 </div>
-                                <div class="absolute inset-0 bg-black bg-opacity-40 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+                                <div class="absolute inset-0 bg-black bg-opacity-40 rounded-lg flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
                                     onclick="document.getElementById('avatarInput').click()">
                                     <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-white" fill="none"
                                         viewBox="0 0 24 24" stroke="currentColor">

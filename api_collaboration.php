@@ -1,5 +1,6 @@
 <?php
 require_once 'includes/db.php';
+require_once 'includes/notifications_helper.php';
 
 header('Content-Type: application/json');
 session_start();
@@ -86,16 +87,35 @@ try {
 
         if ($action === 'add_member') {
             $projectId = $input['project_id'];
-            $username = trim($input['username']);
 
-            // 1. Verify Requestor is Owner (Only owner can add members?) 
-            // Or editors? Let's restrict to Owner for now for simplicity/security.
+            // Allow adding by ID (preferred) or username
+            $newUserId = null;
+            if (isset($input['user_id'])) {
+                $newUserId = $input['user_id'];
+                // Verify user exists
+                $stmt = $pdo->prepare("SELECT id FROM users WHERE id = ?");
+                $stmt->execute([$newUserId]);
+                if (!$stmt->fetch())
+                    $newUserId = null;
+            } elseif (isset($input['username'])) {
+                // Legacy / Manual text fallback
+                $username = trim($input['username']);
+                $stmt = $pdo->prepare("SELECT id FROM users WHERE username = ?");
+                $stmt->execute([$username]);
+                $newUserId = $stmt->fetchColumn();
+            }
+
+            if (!$newUserId) {
+                throw new Exception("Utente non trovato o non specificato.");
+            }
+
+            // 1. Verify Requestor is Owner
             $stmt = $pdo->prepare("SELECT role FROM project_members WHERE project_id = ? AND user_id = ?");
             $stmt->execute([$projectId, $currentUserId]);
             $role = $stmt->fetchColumn();
 
             if ($role !== 'owner') {
-                // Fallback: Check if user is the actual project creator (but missing from members table)
+                // Fallback: Check if user is the actual project creator
                 $stmtOwner = $pdo->prepare("SELECT user_id FROM projects WHERE id = ?");
                 $stmtOwner->execute([$projectId]);
                 $ownerId = $stmtOwner->fetchColumn();
@@ -103,18 +123,9 @@ try {
                 if ($ownerId != $currentUserId) {
                     throw new Exception("Solo il proprietario può aggiungere membri.");
                 }
-
-                // Optional: Auto-fix membership here if we wanted to, but let's just allow the action.
             }
 
-            // 2. Find User ID
-            $stmt = $pdo->prepare("SELECT id FROM users WHERE username = ?");
-            $stmt->execute([$username]);
-            $newUserId = $stmt->fetchColumn();
-
-            if (!$newUserId) {
-                throw new Exception("Utente non trovato.");
-            }
+            // Skipped step 2 (lookup) as we did it above
 
             // 3. Add to Project
             // Check if already member
@@ -126,6 +137,19 @@ try {
 
             $stmt = $pdo->prepare("INSERT INTO project_members (project_id, user_id, role) VALUES (?, ?, 'editor')");
             $stmt->execute([$projectId, $newUserId]);
+
+            // Notification
+            $notifManager = new NotificationManager($pdo);
+            $projectNameStmt = $pdo->prepare("SELECT nome FROM projects WHERE id = ?");
+            $projectNameStmt->execute([$projectId]);
+            $projectName = $projectNameStmt->fetchColumn();
+
+            $notifManager->addNotification(
+                $newUserId,
+                'project_add',
+                "Sei stato aggiunto al progetto '$projectName'",
+                "index.php?project_id=$projectId"
+            );
 
             echo json_encode(['success' => true]);
 

@@ -1,5 +1,6 @@
 <?php
 require_once 'includes/db.php';
+require_once 'includes/notifications_helper.php';
 
 // Leggiamo i dati inviati via JavaScript (JSON)
 $data = json_decode(file_get_contents('php://input'), true);
@@ -66,13 +67,41 @@ if (isset($data['id'])) {
 
     // Execute Assignees Update
     if ($updateAssignees) {
+        $notifManager = new NotificationManager($pdo);
+
         // Clear existing keys for this task (Simple approach: delete all, insert new)
         $del = $pdo->prepare("DELETE FROM task_assignments WHERE task_id = ?");
         $del->execute([$id]);
 
         $ins = $pdo->prepare("INSERT IGNORE INTO task_assignments (task_id, user_id) VALUES (?, ?)");
+
+        // Get Task Title for Notification
+        $tStmt = $pdo->prepare("SELECT titolo, project_id FROM tasks WHERE id = ?");
+        $tStmt->execute([$id]);
+        $taskInfo = $tStmt->fetch(); // title, project_id
+
         foreach ($data['assignees'] as $userId) {
             $ins->execute([$id, $userId]);
+
+            // Avoid notifying self if I assigned myself? Maybe.
+            // But let's notify everyone for now or check current user?
+            // User ID is not readily available in this script via session? 
+            // session_start() IS NOT CALLED HERE! We should add it.
+            // But waiting: update_task.php might rely on session cookie being present but not started?
+            // Actually it reads input. If session is not started, we don't know who is doing the action.
+            // Let's safe check session.
+            if (session_status() === PHP_SESSION_NONE)
+                session_start();
+            $currentUserId = $_SESSION['user_id'] ?? 0;
+
+            if ($userId != $currentUserId && $taskInfo) {
+                $notifManager->addNotification(
+                    $userId,
+                    'task_assign',
+                    "Ti è stato assegnato il task '{$taskInfo['titolo']}'",
+                    "index.php?project_id={$taskInfo['project_id']}" // Ideally scroll to task?
+                );
+            }
         }
     }
 

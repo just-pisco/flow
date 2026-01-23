@@ -66,7 +66,7 @@
                 class="w-full bg-slate-800 text-sm border-none rounded p-2 focus:ring-2 focus:ring-indigo-500 text-white">
         </form>
 
-        <ul class="space-y-2">
+        <ul class="space-y-2" id="sidebarProjectList">
             <?php
             // Recuperiamo i progetti dal DB (Owner o Membro)
             $stmt = $pdo->prepare("
@@ -137,6 +137,18 @@
                 $isTeamAdm = $st->fetchColumn();
             }
             ?>
+
+            <li
+                class="hover:bg-slate-800 p-2 rounded-md cursor-pointer transition-colors border-l-4 border-transparent">
+                <a href="calendar.php" class="flex items-center gap-3 w-full text-white no-underline">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-indigo-400" fill="none"
+                        viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                    Calendario
+                </a>
+            </li>
 
             <?php if ($uRole === 'superadmin' || $isTeamAdm): ?>
                 <li

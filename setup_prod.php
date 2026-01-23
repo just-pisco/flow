@@ -118,6 +118,35 @@ try {
         echo "- Added 'data_modifica' to projects.\n";
     }
 
+    // Projects: descrizione
+    try {
+        $pdo->query("SELECT descrizione FROM projects LIMIT 1");
+    } catch (Exception $e) {
+        // If 'description' exists, rename it. If neither, add 'descrizione'
+        try {
+            $pdo->query("SELECT description FROM projects LIMIT 1");
+            $pdo->exec("ALTER TABLE projects CHANGE COLUMN description descrizione TEXT DEFAULT NULL");
+            echo "- Renamed 'description' to 'descrizione' in projects.\n";
+        } catch (Exception $e2) {
+            $pdo->exec("ALTER TABLE projects ADD COLUMN descrizione TEXT DEFAULT NULL");
+            echo "- Added 'descrizione' to projects.\n";
+        }
+    }
+
+    // 2b. Project Attachments
+    $pdo->exec("CREATE TABLE IF NOT EXISTS project_attachments (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        project_id INT NOT NULL,
+        user_id INT NOT NULL,
+        type VARCHAR(50) NOT NULL, -- 'link', 'drive_file'
+        name VARCHAR(255) NOT NULL,
+        url TEXT NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE CASCADE,
+        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+    )");
+    echo "- Project Attachments table checked.\n";
+
     // Tasks: ordinamento
     try {
         $pdo->query("SELECT ordinamento FROM tasks LIMIT 1");
@@ -205,6 +234,19 @@ try {
         UNIQUE KEY unique_team_member (team_id, user_id)
     )");
     echo "- Team Members table checked.\n";
+
+    // NOTIFICATIONS
+    $pdo->exec("CREATE TABLE IF NOT EXISTS notifications (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        user_id INT NOT NULL,
+        type VARCHAR(50) NOT NULL, -- 'project_add', 'task_assign', 'friend_req'
+        message TEXT NOT NULL,
+        link VARCHAR(255) DEFAULT NULL,
+        is_read TINYINT(1) DEFAULT 0,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+    )");
+    echo "- Notifications table checked.\n";
 
     // FRIENDSHIPS
     $pdo->exec("CREATE TABLE IF NOT EXISTS friendships (
