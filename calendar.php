@@ -69,6 +69,24 @@ $isAnyTeamAdmin = $isTeamAdmin; // For sidebar
             border-color: #4f46e5 !important;
             font-weight: 600 !important;
             text-transform: capitalize;
+            padding: 0.4rem 0.8rem !important; /* Smaller padding */
+            font-size: 0.875rem !important;
+        }
+        
+        @media (max-width: 640px) {
+            .fc-header-toolbar {
+                flex-direction: column;
+                gap: 1rem;
+            }
+            .fc-toolbar-chunk {
+                display: flex;
+                justify-content: center;
+                flex-wrap: wrap;
+                gap: 0.5rem;
+            }
+            .fc-toolbar-title {
+                font-size: 1.1rem !important;
+            }
         }
 
         .fc-button:hover {
@@ -101,18 +119,18 @@ $isAnyTeamAdmin = $isTeamAdmin; // For sidebar
             <?php include 'includes/header_profile_widget.php'; ?>
 
             <div class="max-w-6xl mx-auto w-full mt-12 md:mt-2 flex flex-col flex-1">
-                <header class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
+                <header class="flex flex-col xl:flex-row justify-between items-start xl:items-center mb-6 gap-4">
                     <div>
-                        <h1 class="text-3xl font-bold text-slate-800">Calendario Task</h1>
+                        <h1 class="text-2xl md:text-3xl font-bold text-slate-800">Calendario Task</h1>
                         <p class="text-slate-500 text-sm">Visualizza le tue scadenze mensili.</p>
                     </div>
 
-                    <div class="flex items-center gap-2">
+                    <div class="flex flex-col sm:flex-row items-start sm:items-center gap-3 w-full sm:w-auto">
                         <!-- Google Sync Controls -->
-                        <div class="flex items-center gap-2 mr-4" id="googleControls">
+                        <div class="flex items-center gap-2" id="googleControls">
                             <button onclick="handleAuthClick()" id="authorize_button"
-                                class="hidden bg-white border border-slate-300 text-slate-700 px-3 py-1.5 rounded-lg text-sm font-bold hover:bg-slate-50 flex items-center gap-2 shadow-sm transition-all">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 48 48">
+                                class="bg-white border border-slate-300 text-slate-700 px-3 py-2 rounded-lg text-sm font-bold hover:bg-slate-50 flex items-center gap-2 shadow-sm transition-all whitespace-nowrap">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 48 48">
                                     <path fill="#EA4335"
                                         d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z">
                                     </path>
@@ -126,32 +144,19 @@ $isAnyTeamAdmin = $isTeamAdmin; // For sidebar
                                         d="M24 48c6.48 0 11.95-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z">
                                     </path>
                                 </svg>
-                                Sync Google
+                                <span>Collega Google Calendar</span>
                             </button>
                             <button onclick="handleSignoutClick()" id="signout_button"
-                                class="hidden text-slate-500 hover:text-red-500 text-sm font-medium">Esci</button>
-
-                            <button onclick="openGoogleSettings()"
-                                class="text-slate-400 hover:text-slate-600 p-1 rounded-full hover:bg-slate-100"
-                                title="Configura API Key">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
-                                    stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                </svg>
-                            </button>
+                                class="hidden text-slate-500 hover:text-red-500 text-sm font-medium px-2 underline decoration-slate-300 underline-offset-4">Scollega</button>
                         </div>
 
-                        <div class="flex items-center gap-3 bg-white p-2 rounded-lg border border-slate-200 shadow-sm">
-                            <label class="inline-flex items-center cursor-pointer">
+                        <div class="flex items-center gap-3 bg-white p-2 rounded-lg border border-slate-200 shadow-sm w-full sm:w-auto mt-2 sm:mt-0">
+                            <label class="inline-flex items-center cursor-pointer select-none">
                                 <input type="checkbox" id="viewToggle" class="sr-only peer">
                                 <div
                                     class="relative w-11 h-6 bg-slate-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-indigo-300 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600">
                                 </div>
-                                <span class="ms-3 text-sm font-medium text-slate-700" id="viewLabel">Solo i miei
-                                    task</span>
+                                <span class="ms-3 text-sm font-medium text-slate-700 whitespace-nowrap" id="viewLabel">Solo i miei task</span>
                             </label>
                         </div>
                     </div>
@@ -201,6 +206,12 @@ $isAnyTeamAdmin = $isTeamAdmin; // For sidebar
     </div>
     <!-- Actually the modal should have been removed. Let's just focus on the scripts at the bottom -->
 
+    <script>
+        window.GOOGLE_CONFIG = {
+            clientId: "<?php echo getenv('GOOGLE_CLIENT_ID'); ?>",
+            apiKey: "<?php echo getenv('GOOGLE_API_KEY'); ?>"
+        };
+    </script>
     <script src="js/google_config.js"></script>
     <script src="js/google_calendar.js"></script>
     <script async defer src="https://apis.google.com/js/api.js" onload="gapiLoaded()"></script>

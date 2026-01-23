@@ -1,4 +1,6 @@
 <?php
+header("Cross-Origin-Opener-Policy: same-origin-allow-popups");
+
 session_start();
 if (!isset($_SESSION['user_id'])) {
     header("Location: login.php");
@@ -784,6 +786,18 @@ $isAnyTeamAdmin = $stmt->fetchColumn();
     <script src="js/shared.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/flowbite/2.2.1/datepicker.min.js"></script>
     <script src="js/index_logic.js"></script>
+
+    <script>
+        window.GOOGLE_CONFIG = {
+            clientId: "<?php echo getenv('GOOGLE_CLIENT_ID'); ?>",
+            apiKey: "<?php echo getenv('GOOGLE_API_KEY'); ?>"
+        };
+    </script>
+    <!-- Google Auto-Sync Logic (Headless) -->
+    <script src="js/google_config.js"></script>
+    <script src="js/google_calendar.js"></script>
+    <script async defer src="https://apis.google.com/js/api.js" onload="gapiLoaded()"></script>
+    <script async defer src="https://accounts.google.com/gsi/client" onload="gisLoaded()"></script>
 </body>
 
 </html>

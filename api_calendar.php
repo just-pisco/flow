@@ -1,6 +1,13 @@
 <?php
 require_once 'includes/db.php';
 require_once 'includes/notifications_helper.php';
+require_once 'includes/GoogleCalendarHelper.php';
+
+// Prevent HTML errors breaking JSON
+ini_set('display_errors', 0);
+ini_set('log_errors', 1);
+ini_set('error_log', __DIR__ . '/debug_api_error.log');
+error_reporting(E_ALL);
 
 header('Content-Type: application/json');
 session_start();
@@ -13,6 +20,7 @@ if (!isset($_SESSION['user_id'])) {
 
 $currentUserId = $_SESSION['user_id'];
 $action = $_GET['action'] ?? '';
+$helper = new GoogleCalendarHelper($pdo);
 
 try {
     if ($action === 'get_events') {
@@ -67,6 +75,53 @@ try {
         }
 
         echo json_encode($events); // FullCalendar expects direct array
+
+    } elseif ($action === 'auth_code') {
+        // Exchange Auth Code for Tokens
+        $data = json_decode(file_get_contents('php://input'), true);
+        $code = $data['code'] ?? null;
+
+        if (!$code) {
+            throw new Exception("Auth code missing");
+        }
+
+        $tokens = $helper->exchangeCodeForToken($currentUserId, $code);
+
+        // Se otteniamo i token, proviamo a creare/trovare il calendario
+        // Nota: exchangeCodeForToken salva già nel DB i token.
+        // Possiamo chiamare getAccessToken per sicurezza o usare $tokens['access_token']
+
+        echo json_encode(['success' => true]);
+
+    } elseif ($action === 'get_token') {
+        // Return valid access token if available
+        $token = $helper->getAccessToken($currentUserId);
+
+        if ($token) {
+            echo json_encode(['success' => true, 'access_token' => $token]);
+        } else {
+            echo json_encode(['success' => false, 'error' => 'No token found']);
+        }
+
+    } elseif ($action === 'get_google_config') {
+        // KEEPING FOR COMPATIBILITY (Used by JS to check ID presence)
+        $stmt = $pdo->prepare("SELECT google_calendar_id FROM users WHERE id = ?");
+        $stmt->execute([$currentUserId]);
+        $result = $stmt->fetch(PDO::FETCH_ASSOC);
+        echo json_encode(['success' => true, 'google_calendar_id' => $result['google_calendar_id'] ?? null]);
+
+    } elseif ($action === 'save_google_config') {
+        // Can be used to manually clear calendar ID or legacy purposes
+        $data = json_decode(file_get_contents('php://input'), true);
+        if (array_key_exists('google_calendar_id', $data)) {
+            $calendarId = $data['google_calendar_id'];
+            $stmt = $pdo->prepare("UPDATE users SET google_calendar_id = ? WHERE id = ?");
+            $stmt->execute([$calendarId, $currentUserId]);
+            echo json_encode(['success' => true]);
+        } else {
+            echo json_encode(['success' => false, 'error' => 'Missing google_calendar_id field']);
+        }
+
     } else {
         echo json_encode(['error' => 'Invalid action']);
     }

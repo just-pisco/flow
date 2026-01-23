@@ -1,14 +1,19 @@
 <?php
 require_once 'includes/db.php';
 require_once 'includes/notifications_helper.php';
+require_once 'includes/GoogleCalendarHelper.php';
 
 // Leggiamo i dati inviati via JavaScript (JSON)
 $data = json_decode(file_get_contents('php://input'), true);
+
+if (session_status() === PHP_SESSION_NONE)
+    session_start();
 
 if (isset($data['id'])) {
     $id = $data['id'];
     $updates = [];
     $params = ['id' => $id];
+    $helper = new GoogleCalendarHelper($pdo);
 
     if (isset($data['completato'])) {
         $updates[] = "stato = :stato";
@@ -63,6 +68,18 @@ if (isset($data['id'])) {
             echo json_encode(['success' => false, 'error' => 'Main update failed']);
             exit;
         }
+
+        // Sync for existing assignees (task content changed)
+        try {
+            $stmtAssignees = $pdo->prepare("SELECT user_id FROM task_assignments WHERE task_id = ?");
+            $stmtAssignees->execute([$id]);
+            while ($row = $stmtAssignees->fetch()) {
+                $helper->syncTask($row['user_id'], $id);
+            }
+            // Also sync for creator if needed? Maybe later.
+        } catch (Exception $e) {
+            error_log("Google Sync Error (Update): " . $e->getMessage());
+        }
     }
 
     // Execute Assignees Update
@@ -83,15 +100,6 @@ if (isset($data['id'])) {
         foreach ($data['assignees'] as $userId) {
             $ins->execute([$id, $userId]);
 
-            // Avoid notifying self if I assigned myself? Maybe.
-            // But let's notify everyone for now or check current user?
-            // User ID is not readily available in this script via session? 
-            // session_start() IS NOT CALLED HERE! We should add it.
-            // But waiting: update_task.php might rely on session cookie being present but not started?
-            // Actually it reads input. If session is not started, we don't know who is doing the action.
-            // Let's safe check session.
-            if (session_status() === PHP_SESSION_NONE)
-                session_start();
             $currentUserId = $_SESSION['user_id'] ?? 0;
 
             if ($userId != $currentUserId && $taskInfo) {
@@ -99,8 +107,15 @@ if (isset($data['id'])) {
                     $userId,
                     'task_assign',
                     "Ti è stato assegnato il task '{$taskInfo['titolo']}'",
-                    "index.php?project_id={$taskInfo['project_id']}" // Ideally scroll to task?
+                    "index.php?project_id={$taskInfo['project_id']}"
                 );
+            }
+
+            // Sync for NEW assignee
+            try {
+                $helper->syncTask($userId, $id);
+            } catch (Exception $e) {
+                error_log("Google Sync Error (Assign): " . $e->getMessage());
             }
         }
     }
@@ -110,7 +125,7 @@ if (isset($data['id'])) {
     $updProject->execute([$id]);
 
     echo json_encode(['success' => true]);
-    exit; // Stop further execution since we handled logic manually above
+    exit;
 
 }
 ?>

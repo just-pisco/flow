@@ -1,5 +1,8 @@
 <?php
 require_once 'includes/db.php';
+require_once 'includes/GoogleCalendarHelper.php';
+
+session_start();
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_POST['titolo']) && !empty($_POST['project_id'])) {
     $titolo = $_POST['titolo'];
@@ -18,6 +21,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_POST['titolo']) && !empty(
     $stmt = $pdo->prepare($sql);
 
     if ($stmt->execute(['titolo' => $titolo, 'project_id' => $project_id, 'scadenza' => $scadenza])) {
+        $taskId = $pdo->lastInsertId();
+
+        // Sync to Google Calendar (Creator)
+        if (isset($_SESSION['user_id'])) {
+            try {
+                $helper = new GoogleCalendarHelper($pdo);
+                $helper->syncTask($_SESSION['user_id'], $taskId);
+            } catch (Exception $e) {
+                // Ignore sync errors to not block flow
+                error_log("Google Sync Error (Add): " . $e->getMessage());
+            }
+        }
+
         // Aggiorna data_modifica del progetto
         $upd = $pdo->prepare("UPDATE projects SET data_modifica = NOW() WHERE id = ?");
         $upd->execute([$project_id]);

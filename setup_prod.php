@@ -108,6 +108,38 @@ try {
         echo "- Added 'profile_image' to users.\n";
     }
 
+    // Users: google_calendar_id
+    try {
+        $pdo->query("SELECT google_calendar_id FROM users LIMIT 1");
+    } catch (Exception $e) {
+        $pdo->exec("ALTER TABLE users ADD COLUMN google_calendar_id VARCHAR(255) DEFAULT NULL");
+        echo "- Added 'google_calendar_id' to users.\n";
+    }
+
+    // Users: google_access_token
+    try {
+        $pdo->query("SELECT google_access_token FROM users LIMIT 1");
+    } catch (Exception $e) {
+        $pdo->exec("ALTER TABLE users ADD COLUMN google_access_token TEXT DEFAULT NULL");
+        echo "- Added 'google_access_token' to users.\n";
+    }
+
+    // Users: google_refresh_token
+    try {
+        $pdo->query("SELECT google_refresh_token FROM users LIMIT 1");
+    } catch (Exception $e) {
+        $pdo->exec("ALTER TABLE users ADD COLUMN google_refresh_token TEXT DEFAULT NULL");
+        echo "- Added 'google_refresh_token' to users.\n";
+    }
+
+    // Users: google_token_expires_at
+    try {
+        $pdo->query("SELECT google_token_expires_at FROM users LIMIT 1");
+    } catch (Exception $e) {
+        $pdo->exec("ALTER TABLE users ADD COLUMN google_token_expires_at INT DEFAULT NULL");
+        echo "- Added 'google_token_expires_at' to users.\n";
+    }
+
 
     // Projects: user_id (Backfill if needed, but handled by create)
     // Projects: data_modifica

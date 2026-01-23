@@ -5,3 +5,11 @@
 #0 /home/pisco/Local Sites/flow/app/public/api_projects.php(44): PDOStatement->execute(Array)
 #1 {main}
 2026-01-22 19:58:50: SQLSTATE[HY000]: General error: 1525 Incorrect DATE value: '' in /home/pisco/Local Sites/flow/app/public/api_calendar.php:29
+[23-Jan-2026 19:10:23 UTC] PHP Warning:  Trying to access array offset on value of type null in /home/pisco/Local Sites/flow/app/public/includes/GoogleCalendarHelper.php on line 87
+[23-Jan-2026 19:10:23 UTC] PHP Warning:  Trying to access array offset on value of type null in /home/pisco/Local Sites/flow/app/public/includes/GoogleCalendarHelper.php on line 88
+[23-Jan-2026 19:11:37 UTC] PHP Warning:  Trying to access array offset on value of type null in /home/pisco/Local Sites/flow/app/public/includes/GoogleCalendarHelper.php on line 87
+[23-Jan-2026 19:11:37 UTC] PHP Warning:  Trying to access array offset on value of type null in /home/pisco/Local Sites/flow/app/public/includes/GoogleCalendarHelper.php on line 88
+[23-Jan-2026 19:14:20 UTC] Curl Error: error setting certificate file: /home/pisco/Local Sites/flow/app/public/wp-includes/certificates/ca-bundle.crt
+2026-01-23 19:14:20: Curl Error: error setting certificate file: /home/pisco/Local Sites/flow/app/public/wp-includes/certificates/ca-bundle.crt in /home/pisco/Local Sites/flow/app/public/includes/GoogleCalendarHelper.php:231
+[23-Jan-2026 19:16:20 UTC] Curl Error: error setting certificate file: /home/pisco/Local Sites/flow/app/public/wp-includes/certificates/ca-bundle.crt
+2026-01-23 19:16:20: Curl Error: error setting certificate file: /home/pisco/Local Sites/flow/app/public/wp-includes/certificates/ca-bundle.crt in /home/pisco/Local Sites/flow/app/public/includes/GoogleCalendarHelper.php:231

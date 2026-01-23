@@ -17,6 +17,7 @@ try {
 } catch (\PDOException $e) {
     // In produzione non mostrare dettagli errore database!
     // throw new \PDOException($e->getMessage(), (int) $e->getCode());
-    die("Errore di connessione al database. Controlla il file di log.");
+    // die("Errore di connessione al database. Controlla il file di log.");
+    die("Errore DB: " . $e->getMessage());
 }
 ?>
