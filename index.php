@@ -1,5 +1,5 @@
 <?php
-header("Cross-Origin-Opener-Policy: same-origin-allow-popups");
+//header("Cross-Origin-Opener-Policy: same-origin-allow-popups");
 
 session_start();
 if (!isset($_SESSION['user_id'])) {
@@ -507,6 +507,27 @@ $isAnyTeamAdmin = $stmt->fetchColumn();
                     </div>
                 </div>
 
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-slate-700 mb-2 flex justify-between items-center">
+                        <span>Allegati</span>
+                        <button onclick="openDrivePicker()" type="button"
+                            class="text-indigo-600 hover:text-indigo-800 text-xs font-bold flex items-center gap-1 bg-indigo-50 px-2 py-1 rounded hover:bg-indigo-100 transition-colors">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 24 24"
+                                fill="currentColor">
+                                <path fill-rule="evenodd"
+                                    d="M10.5 3.75a6 6 0 0 0-5.98 6.496A5.25 5.25 0 0 0 6.75 20.25H18a4.5 4.5 0 0 0 2.206-8.423 3.75 3.75 0 0 0-4.133-4.303A6.001 6.001 0 0 0 10.5 3.75Zm2.03 5.47a.75.75 0 0 0-1.06 0l-3 3a.75.75 0 1 0 1.06 1.06l1.72-1.72v4.94a.75.75 0 0 0 1.5 0v-4.94l1.72 1.72a.75.75 0 1 0 1.06-1.06l-3-3Z"
+                                    clip-rule="evenodd" />
+                            </svg>
+                            Carica File
+                        </button>
+                    </label>
+
+                    <div id="editTaskAttachmentsList" class="flex flex-col gap-2">
+                        <!-- Populated via JS -->
+                        <p class="text-xs text-slate-400 italic" id="noAttachmentsMsg">Nessun allegato.</p>
+                    </div>
+                </div>
+
                 <div class="mb-6">
                     <label class="block text-sm font-medium text-slate-700 mb-1">Descrizione</label>
                     <textarea id="editTaskDesc" rows="4"
@@ -523,6 +544,33 @@ $isAnyTeamAdmin = $stmt->fetchColumn();
                 <button onclick="saveTaskChanges()"
                     class="w-full sm:w-auto px-4 py-2 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 font-bold shadow-lg shadow-indigo-200 transition-all">Salva
                     Modifiche</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Drive Auth Modal -->
+    <div id="driveAuthModal" class="fixed inset-0 z-[60] flex items-center justify-center hidden" aria-modal="true">
+        <div class="absolute inset-0 bg-gray-900/75 backdrop-blur-sm" onclick="closeDriveAuthModal()"></div>
+        <div
+            class="bg-white rounded-xl shadow-2xl w-full max-w-sm relative z-10 p-6 flex flex-col items-center text-center">
+            <div class="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center mb-4">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-blue-600" viewBox="0 0 24 24"
+                    fill="currentColor">
+                    <path
+                        d="M23.64 7l-3.32-5.76a1 1 0 0 0-.86-.49H8.54a1 1 0 0 0-.86.49L4.36 7h19.28zM12 13.5l-2.93-5.07H3.07a1 1 0 0 0 .86 1.5l8.07 13.98c.2.35.58.58.98.6a1 1 0 0 0 .88-.5l2.93-5.07h-4.79zM15.4 12.07l2.92 5.06 3.32-5.75a1 1 0 0 0 0-1L18.32 5.07a1 1 0 0 0-.86-.5h-5.85l3.79 7.5z" />
+                </svg>
+            </div>
+            <h3 class="text-xl font-bold text-slate-900 mb-2">Connetti Google Drive</h3>
+            <p class="text-slate-500 text-sm mb-6">
+                Per allegare file è necessario l'accesso a Google Drive. Clicca su "Concedi Permesso" per abilitare
+                l'integrazione.
+            </p>
+            <div class="flex gap-3 w-full">
+                <button onclick="closeDriveAuthModal()"
+                    class="flex-1 py-2 rounded-lg border border-slate-300 text-slate-700 hover:bg-slate-50 font-medium">Annulla</button>
+                <button onclick="driveAuthUpgrade()"
+                    class="flex-1 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 font-bold shadow-md">Concedi
+                    Permesso</button>
             </div>
         </div>
     </div>
@@ -796,6 +844,7 @@ $isAnyTeamAdmin = $stmt->fetchColumn();
     <!-- Google Auto-Sync Logic (Headless) -->
     <script src="js/google_config.js"></script>
     <script src="js/google_calendar.js"></script>
+    <script src="js/google_drive.js"></script>
     <script async defer src="https://apis.google.com/js/api.js" onload="gapiLoaded()"></script>
     <script async defer src="https://accounts.google.com/gsi/client" onload="gisLoaded()"></script>
 </body>

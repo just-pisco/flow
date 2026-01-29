@@ -289,6 +289,8 @@ let currentDetailProjectId = null;
 function openProjectDetails(defaultTab = 'info') {
     if (typeof CURRENT_PROJECT_ID === 'undefined' || !CURRENT_PROJECT_ID) return;
     currentDetailProjectId = CURRENT_PROJECT_ID;
+    window.currentProjectId = CURRENT_PROJECT_ID;
+    window.currentTaskId = null;
 
     const modal = document.getElementById('projectDetailsModal');
     const backdrop = document.getElementById('projectDetailsBackdrop');
@@ -337,7 +339,10 @@ function switchProjectTab(tabName) {
     activeBtn.classList.add('border-indigo-600', 'text-indigo-600');
 
     if (tabName === 'members') loadProjectMembers();
-    if (tabName === 'attachments') loadProjectAttachments();
+    if (tabName === 'members') loadProjectMembers();
+    if (tabName === 'attachments' && typeof loadProjectAttachments === 'function') {
+        loadProjectAttachments(currentDetailProjectId);
+    }
 }
 
 async function loadProjectDetails() {
@@ -508,81 +513,3 @@ async function executeRemoveMember() {
     closeRemoveMemberModal();
 }
 
-
-// Attachments Logic
-async function loadProjectAttachments() {
-    const list = document.getElementById('attachmentsList');
-    list.innerHTML = '<p class="text-sm text-slate-400 italic">Caricamento...</p>';
-
-    try {
-        // We reuse get_details which returns attachments, OR call a specific endpoint if we separated it?
-        // In api_projects, get_details returns "attachments".
-        // But for refreshing just the list, re-fetching full details is okay.
-        const res = await fetch(`api_projects.php?action=get_details&project_id=${currentDetailProjectId}`);
-        const json = await res.json();
-        if (json.success) {
-            const atts = json.data.attachments;
-            if (atts.length === 0) list.innerHTML = '<p class="text-sm text-slate-500">Nessun allegato.</p>';
-            else {
-                list.innerHTML = atts.map(a => `
-                    <div class="flex justify-between items-center bg-white p-3 rounded-lg border border-slate-100 shadow-sm">
-                        <a href="${a.url}" target="_blank" class="flex items-center gap-3 text-indigo-600 hover:text-indigo-800 hover:underline">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                ${a.type === 'drive_file'
-                        ? '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />'
-                        : '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />'}
-                            </svg>
-                            <span class="font-medium">${a.name}</span>
-                        </a>
-                        <button onclick="deleteAttachment(${a.id})" class="text-slate-400 hover:text-red-500">
-                             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
-                        </button>
-                    </div>
-                `).join('');
-            }
-        }
-    } catch (e) { list.innerHTML = 'Errore caricamento.'; }
-}
-
-async function addProjectAttachment() {
-    const name = document.getElementById('newAttachName').value.trim();
-    const url = document.getElementById('newAttachUrl').value.trim();
-    const type = document.getElementById('newAttachType').value;
-
-    if (!name || !url) {
-        showToast("Inserisci nome e URL.", 'error');
-        return;
-    }
-
-    try {
-        const res = await fetch('api_projects.php?action=add_attachment', {
-            method: 'POST',
-            body: JSON.stringify({ project_id: currentDetailProjectId, type, name, url })
-        });
-        const json = await res.json();
-        if (json.success) {
-            showToast('Allegato aggiunto!', 'success');
-            document.getElementById('newAttachName').value = '';
-            document.getElementById('newAttachUrl').value = '';
-            loadProjectAttachments();
-        } else {
-            showToast(json.error || 'Errore', 'error');
-        }
-    } catch (e) { showToast('Errore rete', 'error'); }
-}
-
-async function deleteAttachment(id) {
-    if (!confirm("Eliminare allegato?")) return;
-    try {
-        const res = await fetch('api_projects.php?action=delete_attachment', {
-            method: 'POST',
-            body: JSON.stringify({ id: id })
-        });
-        const json = await res.json();
-        if (json.success) {
-            loadProjectAttachments();
-        } else {
-            showToast(json.error || 'Errore', 'error');
-        }
-    } catch (e) { }
-}

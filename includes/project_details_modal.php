@@ -95,24 +95,16 @@
                 </div>
 
                 <!-- Add Form -->
-                <div class="bg-white p-4 rounded-lg border border-slate-200 shadow-sm">
-                    <h4 class="text-sm font-bold text-slate-800 mb-3">Nuovo Allegato</h4>
-                    <div class="space-y-3">
-                        <input type="text" id="newAttachName" placeholder="Nome (es. Briefing, Link Drive)"
-                            class="w-full border border-slate-200 rounded p-2 text-sm">
-                        <div class="flex gap-2">
-                            <select id="newAttachType" class="border border-slate-200 rounded p-2 text-sm bg-slate-50">
-                                <option value="link">Link Web</option>
-                                <option value="drive_file">Google Drive File</option>
-                            </select>
-                            <input type="text" id="newAttachUrl" placeholder="URL (https://...)"
-                                class="flex-1 border border-slate-200 rounded p-2 text-sm">
-                        </div>
-                        <div class="flex justify-end">
-                            <button onclick="addProjectAttachment()"
-                                class="text-indigo-600 hover:text-indigo-800 font-bold text-sm">Aggiungi</button>
-                        </div>
-                    </div>
+                <div class="mt-4 flex justify-center">
+                    <button onclick="openDrivePicker()"
+                        class="flex items-center gap-2 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 hover:text-indigo-800 px-4 py-2 rounded-lg font-bold transition-colors">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="currentColor">
+                            <path fill-rule="evenodd"
+                                d="M10.5 3.75a6 6 0 0 0-5.98 6.496A5.25 5.25 0 0 0 6.75 20.25H18a4.5 4.5 0 0 0 2.206-8.423 3.75 3.75 0 0 0-4.133-4.303A6.001 6.001 0 0 0 10.5 3.75Zm2.03 5.47a.75.75 0 0 0-1.06 0l-3 3a.75.75 0 1 0 1.06 1.06l1.72-1.72v4.94a.75.75 0 0 0 1.5 0v-4.94l1.72 1.72a.75.75 0 1 0 1.06-1.06l-3-3Z"
+                                clip-rule="evenodd" />
+                        </svg>
+                        Carica File
+                    </button>
                 </div>
             </div>
         </div>
@@ -121,15 +113,17 @@
 </div>
 <!-- Remove Member Confirmation Modal -->
 <div id="removeMemberModal" class="fixed inset-0 z-[80] flex items-center justify-center hidden" aria-modal="true">
-    <div class="absolute inset-0 bg-gray-900/75 backdrop-blur-sm transition-opacity opacity-0" 
-         id="removeMemberBackdrop" onclick="closeRemoveMemberModal()"></div>
-    
+    <div class="absolute inset-0 bg-gray-900/75 backdrop-blur-sm transition-opacity opacity-0" id="removeMemberBackdrop"
+        onclick="closeRemoveMemberModal()"></div>
+
     <div class="bg-white rounded-xl shadow-2xl w-full max-w-sm relative z-10 transform transition-all scale-95 opacity-0 p-6 text-center"
-         id="removeMemberContent">
-        
+        id="removeMemberContent">
+
         <div class="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center mx-auto mb-4">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-red-600" fill="none" viewBox="0 0 24 24"
+                stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
             </svg>
         </div>
 
@@ -137,12 +131,12 @@
         <p class="text-sm text-slate-500 mb-6">L'utente perderà l'accesso al progetto e ai task assegnati.</p>
 
         <div class="flex gap-3 justify-center">
-            <button onclick="closeRemoveMemberModal()" 
-                    class="px-4 py-2 rounded-lg text-slate-700 hover:bg-slate-100 font-medium transition-colors">
+            <button onclick="closeRemoveMemberModal()"
+                class="px-4 py-2 rounded-lg text-slate-700 hover:bg-slate-100 font-medium transition-colors">
                 Annulla
             </button>
-            <button onclick="executeRemoveMember()" 
-                    class="px-4 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700 font-bold shadow-md transition-all">
+            <button onclick="executeRemoveMember()"
+                class="px-4 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700 font-bold shadow-md transition-all">
                 Rimuovi
             </button>
         </div>

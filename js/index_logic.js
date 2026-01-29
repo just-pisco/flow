@@ -26,16 +26,56 @@ const editTaskTitle = document.getElementById('editTaskTitle');
 const editTaskDate = document.getElementById('editTaskDate');
 const editTaskDesc = document.getElementById('editTaskDesc');
 
+// --- GOOGLE DRIVE ATTACHMENTS ---
+
+window.currentTaskId = null; // Used by google_drive.js
+
+function loadTaskAttachments(taskId) {
+    const list = document.getElementById('editTaskAttachmentsList');
+    const msg = document.getElementById('noAttachmentsMsg');
+
+    if (!list) return;
+
+    // Clear list but keep msg (hidden/shown later)
+    list.innerHTML = '';
+    list.appendChild(msg);
+    msg.style.display = 'block';
+
+    fetch(`api_drive.php?action=get_attachments&task_id=${taskId}`)
+        .then(res => res.json())
+        .then(data => {
+            if (data.success && data.files && data.files.length > 0) {
+                msg.style.display = 'none';
+                data.files.forEach(file => {
+                    const div = document.createElement('div');
+                    div.className = "flex items-center gap-2 p-2 bg-slate-50 border border-slate-200 rounded hover:bg-slate-100 transition-colors group";
+                    div.innerHTML = `
+                        <img src="${file.icon_url || 'https://ssl.gstatic.com/docs/doclist/images/icon_10_generic_list.png'}" class="w-4 h-4" alt="icon">
+                        <a href="${file.file_url}" target="_blank" class="text-sm text-slate-700 truncate flex-1 hover:text-indigo-600 hover:underline" title="${file.file_name}">${file.file_name}</a>
+                        <!-- Optional: Delete button later -->
+                    `;
+                    list.appendChild(div);
+                });
+            } else {
+                msg.style.display = 'block';
+                msg.textContent = "Nessun allegato.";
+            }
+        })
+        .catch(err => {
+            console.error(err);
+            msg.textContent = "Errore caricamento allegati.";
+        });
+}
+
 // --- TASKS ---
 
 function openEditTask(task) {
+    window.currentTaskId = task.id; // Set global ID for Drive Upload
     editTaskId.value = task.id;
     editTaskTitle.value = task.titolo;
 
     // Convert YYYY-MM-DD to DD/MM/YYYY for display if needed
     if (task.scadenza) {
-        // Native date input expects YYYY-MM-DD, so keep it if input type='date'
-        // If text, convert. Assuming input type='date' for modern browsers
         editTaskDate.value = task.scadenza;
     } else {
         editTaskDate.value = '';
@@ -47,6 +87,9 @@ function openEditTask(task) {
     populateEditTaskStatus(task.stato);
 
     editTaskModal.classList.remove('hidden');
+
+    // Load Attachments
+    loadTaskAttachments(task.id);
 
     // Load Assignees
     const assigneesList = document.getElementById('editTaskAssigneesList');

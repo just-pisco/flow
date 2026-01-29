@@ -304,6 +304,42 @@ try {
     echo "\n<strong style='color:green'>SUCCESS! Database setup completed.</strong>";
     echo "\nDelete this file (setup_prod.php) from the server after use for security.";
 
+    // 4. Integrations Tables
+    echo "Checking Integration tables...\n";
+
+    // ATTACHMENTS (Tasks & Projects)
+    // Check if old table exists and rename it if needed
+    try {
+        $result = $pdo->query("SHOW TABLES LIKE 'task_attachments'");
+        if ($result->rowCount() > 0) {
+            $pdo->exec("RENAME TABLE task_attachments TO attachments");
+            $pdo->exec("ALTER TABLE attachments MODIFY COLUMN task_id INT NULL");
+            $pdo->exec("ALTER TABLE attachments ADD COLUMN project_id INT NULL AFTER task_id");
+            $pdo->exec("ALTER TABLE attachments ADD FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE CASCADE");
+            echo "- Renamed task_attachments to attachments and updated schema.\n";
+        }
+    } catch (Exception $e) {
+        // Ignore rename error if table doesn't exist etc.
+    }
+
+    $pdo->exec("CREATE TABLE IF NOT EXISTS attachments (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        task_id INT NULL,
+        project_id INT NULL,
+        user_id INT NOT NULL, 
+        file_provider ENUM('google_drive', 'local') DEFAULT 'google_drive',
+        external_file_id VARCHAR(255), 
+        file_name VARCHAR(255),
+        file_url TEXT, 
+        mime_type VARCHAR(100),
+        icon_url TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (task_id) REFERENCES tasks(id) ON DELETE CASCADE,
+        FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE CASCADE,
+        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+    )");
+    echo "- Attachments table checked.\n";
+
 } catch (PDOException $e) {
     echo "\n<strong style='color:red'>ERROR: " . $e->getMessage() . "</strong>";
 }

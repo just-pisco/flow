@@ -5,11 +5,11 @@ let gapiInited = false;
 let gisInited = false;
 
 const DISCOVERY_DOC = 'https://www.googleapis.com/discovery/v1/apis/calendar/v3/rest';
-// Use "app.created" scope strictly
+// Use "app.created" scope strictly. Drive scope requested on demand.
 const SCOPES = 'https://www.googleapis.com/auth/calendar.app.created';
 
 function gapiLoaded() {
-    gapi.load('client', initializeGapiClient);
+    gapi.load('client:picker', initializeGapiClient);
 }
 
 async function initializeGapiClient() {
@@ -42,7 +42,7 @@ async function gisLoaded() {
 }
 
 async function checkAuthStatus() {
-    if (!gapiInited || !gisInited) return;
+    if (!gapiInited || !gisInited) return false;
 
     try {
         // Ask Backend for Token
@@ -56,18 +56,18 @@ async function checkAuthStatus() {
             gapi.client.setToken({ access_token: data.access_token });
 
             if (btn) {
-                btn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" /></svg>
-                                <span class="text-green-700">Google Calendar Connected</span>`;
+                btn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" /></svg>
+                                <span class="text-green-700 font-bold">Google Calendar Connesso</span>`;
                 btn.classList.add('bg-green-50', 'border-green-200');
                 btn.classList.remove('hover:bg-slate-50', 'text-slate-700', 'bg-amber-50', 'border-amber-200');
                 btn.onclick = () => syncToGoogle(); // Manual Sync only
+                btn.title = "Clicca per sincronizzare manualmente";
             }
 
             const signoutBtn = document.getElementById('signout_button');
             if (signoutBtn) signoutBtn.classList.remove('hidden');
 
-            // Optional: Auto-sync on load if needed, but backend handles new tasks now.
-            // syncToGoogle(); 
+            return true;
 
         } else {
             // No valid token on server
@@ -79,9 +79,11 @@ async function checkAuthStatus() {
                 btn.onclick = () => handleAuthClick();
                 btn.classList.remove('hidden');
             }
+            return false;
         }
     } catch (err) {
         console.error("Auth Check Error:", err);
+        return false;
     }
 }
 
@@ -103,14 +105,17 @@ async function exchangeCodeForToken(code) {
         const data = await res.json();
 
         if (data.success) {
-            checkAuthStatus(); // Refresh UI
+            await checkAuthStatus(); // Refresh UI and GAPI Token
             showToast("Google Calendar collegato con successo!", "success");
+            return data;
         } else {
             showToast("Errore collegamento: " + (data.error || 'Unknown'), "error");
+            return null;
         }
     } catch (err) {
         console.error("Exchange Error:", err);
         showToast("Errore di comunicazione col server", "error");
+        return null;
     }
 }
 

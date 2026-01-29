@@ -54,51 +54,84 @@ $isAnyTeamAdmin = $isTeamAdmin; // For sidebar
 
         .fc-day-today {
             background-color: #f8fafc !important;
-            /* slate-50 */
         }
 
         .fc-toolbar-title {
-            font-size: 1.25rem !important;
-            font-weight: 700 !important;
+            font-size: 1.5rem !important;
+            font-weight: 800 !important;
             color: #1e293b;
         }
 
+        /* Desktop & Global Button Spacing */
+        .fc-button-group {
+            display: flex !important;
+            gap: 0.2rem !important;
+            /* Margine 0.2rem globale */
+        }
+
         .fc-button {
-            background-color: #4f46e5 !important;
-            /* indigo-600 */
-            border-color: #4f46e5 !important;
+            background-color: white !important;
+            border: 1px solid #e2e8f0 !important;
+            color: #4f46e5 !important;
             font-weight: 600 !important;
             text-transform: capitalize;
-            padding: 0.4rem 0.8rem !important; /* Smaller padding */
+            padding: 0.5rem 1rem !important;
             font-size: 0.875rem !important;
-        }
-        
-        @media (max-width: 640px) {
-            .fc-header-toolbar {
-                flex-direction: column;
-                gap: 1rem;
-            }
-            .fc-toolbar-chunk {
-                display: flex;
-                justify-content: center;
-                flex-wrap: wrap;
-                gap: 0.5rem;
-            }
-            .fc-toolbar-title {
-                font-size: 1.1rem !important;
-            }
+            border-radius: 0.5rem !important;
+            box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            transition: all 0.2s;
+            margin: 0 !important;
         }
 
         .fc-button:hover {
-            background-color: #4338ca !important;
-            /* indigo-700 */
-            border-color: #4338ca !important;
+            background-color: #eef2ff !important;
+            border-color: #c7d2fe !important;
+            color: #4338ca !important;
         }
 
         .fc-button-active {
-            background-color: #3730a3 !important;
-            /* indigo-800 */
-            border-color: #3730a3 !important;
+            background-color: #4f46e5 !important;
+            border-color: #4f46e5 !important;
+            color: white !important;
+        }
+
+        /* Mobile Optimizations */
+        @media (max-width: 640px) {
+            .fc-header-toolbar {
+                display: flex !important;
+                flex-wrap: wrap !important;
+                gap: 1rem !important;
+                margin-bottom: 1.5rem !important;
+                justify-content: space-between !important;
+            }
+
+            .fc-toolbar-chunk:nth-child(2) {
+                width: 100%;
+                order: -1;
+                text-align: center;
+                display: flex;
+                justify-content: center;
+            }
+
+            .fc-toolbar-title {
+                font-size: 1.25rem !important;
+            }
+
+            /* Reduced gap for Mobile */
+            .fc-button-group {
+                gap: 0.2rem !important;
+                /* Margine 0.2rem anche mobile */
+            }
+
+            .fc-button {
+                padding: 0.4rem 0.8rem !important;
+                font-size: 0.8rem !important;
+                flex: 1;
+            }
+
+            .fc-button-group>.fc-button {
+                border-radius: 0.5rem !important;
+            }
         }
     </style>
 </head>
@@ -150,20 +183,22 @@ $isAnyTeamAdmin = $isTeamAdmin; // For sidebar
                                 class="hidden text-slate-500 hover:text-red-500 text-sm font-medium px-2 underline decoration-slate-300 underline-offset-4">Scollega</button>
                         </div>
 
-                        <div class="flex items-center gap-3 bg-white p-2 rounded-lg border border-slate-200 shadow-sm w-full sm:w-auto mt-2 sm:mt-0">
+                        <div
+                            class="flex items-center gap-3 bg-white p-2 rounded-lg border border-slate-200 shadow-sm w-full sm:w-auto mt-2 sm:mt-0">
                             <label class="inline-flex items-center cursor-pointer select-none">
                                 <input type="checkbox" id="viewToggle" class="sr-only peer">
                                 <div
                                     class="relative w-11 h-6 bg-slate-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-indigo-300 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600">
                                 </div>
-                                <span class="ms-3 text-sm font-medium text-slate-700 whitespace-nowrap" id="viewLabel">Solo i miei task</span>
+                                <span class="ms-3 text-sm font-medium text-slate-700 whitespace-nowrap"
+                                    id="viewLabel">Solo i miei task</span>
                             </label>
                         </div>
                     </div>
                 </header>
 
                 <div
-                    class="bg-white p-4 md:p-6 rounded-xl shadow-sm border border-slate-200 flex-1 overflow-hidden flex flex-col">
+                    class="bg-white p-2 md:p-6 rounded-xl shadow-sm border border-slate-200 flex-1 overflow-hidden flex flex-col">
                     <div id='calendar' class="flex-1"></div>
                 </div>
             </div>
@@ -173,38 +208,8 @@ $isAnyTeamAdmin = $isTeamAdmin; // For sidebar
     <!-- Google Settings Modal -->
     <div id="googleSettingsModal"
         class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-        <div class="bg-white p-6 rounded-xl w-full max-w-md relative">
-            <h3 class="text-lg font-bold mb-4">Configurazione Google Calendar</h3>
-            <p class="text-sm text-slate-500 mb-4">Inserisci il tuo <strong>Client ID</strong> e <strong>API
-                    Key</strong> (opzionale) per abilitare la sincronizzazione.</p>
-
-            <div class="space-y-4">
-                <div>
-                    <label class="block text-sm font-medium text-slate-700">Client ID</label>
-                    <input type="text" id="gClientId" placeholder="xxx.apps.googleusercontent.com"
-                        class="w-full border p-2 rounded focus:ring-2 focus:ring-indigo-500 outline-none text-sm font-mono">
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-slate-700">API Key (Opzionale)</label>
-                    <input type="text" id="gApiKey" placeholder="AIza..."
-                        class="w-full border p-2 rounded focus:ring-2 focus:ring-indigo-500 outline-none text-sm font-mono">
-                </div>
-            </div>
-
-            <div class="flex justify-end gap-2 mt-6">
-                <button onclick="document.getElementById('googleSettingsModal').classList.add('hidden')"
-                    class="px-4 py-2 text-slate-600 rounded hover:bg-slate-100">Annulla</button>
-                <button onclick="saveGoogleSettings()"
-                    class="px-4 py-2 bg-indigo-600 text-white rounded font-bold hover:bg-indigo-700">Salva</button>
-            </div>
-        </div>
+        <!-- Modal content removed/unused -->
     </div>
-
-    <div id="googleSettingsModal"
-        class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-        <!-- Modal content removed or kept as backup? User config is via file now, so this is unused code effectively, but let's just insert the script for now -->
-    </div>
-    <!-- Actually the modal should have been removed. Let's just focus on the scripts at the bottom -->
 
     <script>
         window.GOOGLE_CONFIG = {
@@ -214,6 +219,7 @@ $isAnyTeamAdmin = $isTeamAdmin; // For sidebar
     </script>
     <script src="js/google_config.js"></script>
     <script src="js/google_calendar.js"></script>
+    <script src="js/google_drive.js"></script>
     <script async defer src="https://apis.google.com/js/api.js" onload="gapiLoaded()"></script>
     <script async defer src="https://accounts.google.com/gsi/client" onload="gisLoaded()"></script>
 
@@ -233,31 +239,45 @@ $isAnyTeamAdmin = $isTeamAdmin; // For sidebar
             var calendar = new FullCalendar.Calendar(calendarEl, {
                 initialView: 'dayGridMonth',
                 locale: 'it', // Italian
-                headerToolbar: {
-                    left: 'prev,next today',
-                    center: 'title',
-                    right: 'dayGridMonth,timeGridWeek,listWeek'
-                },
+                headerToolbar: getHeaderToolbar(), // Responsive toolbar
                 events: 'api_calendar.php?action=get_events&view=' + savedView,
                 eventClick: function (info) {
                     if (info.event.url) {
-                        // Let default behavior happen (navigate to URL)
-                        // Or prevent and allow new tab:
-                        // info.jsEvent.preventDefault(); 
-                        // window.open(info.event.url);
+                        // Let default behavior happen
                     }
                 },
                 buttonText: {
                     today: 'Oggi',
                     month: 'Mese',
-                    week: 'Settimana',
+                    week: 'Sett.',
                     day: 'Giorno',
                     list: 'Lista'
                 },
                 height: '100%',
-                contentHeight: 'auto'
+                contentHeight: 'auto',
+                windowResize: function (view) {
+                    calendar.setOption('headerToolbar', getHeaderToolbar());
+                }
             });
             calendar.render();
+
+            function getHeaderToolbar() {
+                if (window.innerWidth < 640) {
+                    // Mobile Layout (Compact)
+                    return {
+                        left: 'prev,next',
+                        center: 'title', // Included title! CSS will move it to top.
+                        right: 'dayGridMonth,timeGridWeek,listWeek'
+                    };
+                } else {
+                    // Desktop Layout
+                    return {
+                        left: 'prev,next', // Removed 'today'
+                        center: 'title',
+                        right: 'dayGridMonth,timeGridWeek,listWeek'
+                    };
+                }
+            }
 
             // Toggle Logic
             toggle.addEventListener('change', function () {
@@ -274,25 +294,6 @@ $isAnyTeamAdmin = $isTeamAdmin; // For sidebar
             // Expose calendar to window for google sync script if needed
             window.fullCalendarInstance = calendar;
         });
-
-        // Settings Modal Helpers
-        function openGoogleSettings() {
-            document.getElementById('gClientId').value = localStorage.getItem('gClientId') || '';
-            document.getElementById('gApiKey').value = localStorage.getItem('gApiKey') || '';
-            document.getElementById('googleSettingsModal').classList.remove('hidden');
-        }
-
-        function saveGoogleSettings() {
-            var clientId = document.getElementById('gClientId').value.trim();
-            var apiKey = document.getElementById('gApiKey').value.trim();
-
-            if (clientId) localStorage.setItem('gClientId', clientId);
-            if (apiKey) localStorage.setItem('gApiKey', apiKey);
-
-            document.getElementById('googleSettingsModal').classList.add('hidden');
-            showToast("Impostazioni salvate. Ricarica la pagina.", "success");
-            setTimeout(() => location.reload(), 1000);
-        }
     </script>
 </body>
 
