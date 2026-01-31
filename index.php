@@ -793,6 +793,10 @@ $isAnyTeamAdmin = $stmt->fetchColumn();
         let USER_STATUSES = <?php echo json_encode($statuses ?? []); ?>;
         const STATUS_MAP = <?php echo json_encode($statusMap ?? []); ?>;
         let statusHasChanged = false;
+
+        // Inject API Key State
+        const HAS_API_KEY = <?php echo !empty($apiKey) ? 'true' : 'false'; ?>;
+        const USER_API_KEY = "<?php echo $apiKey ?? ''; ?>";
     </script>
     <style>
         body {

@@ -28,6 +28,18 @@
             transform: translateX(-100%);
         }
     }
+
+    /* Input Fix for Dark Mode / Autofill */
+    #sidebar input,
+    #sidebar input:-webkit-autofill {
+        background-color: #1e293b !important;
+        /* bg-slate-800 */
+        color: white !important;
+        -webkit-text-fill-color: white !important;
+        -webkit-box-shadow: 0 0 0 30px #1e293b inset !important;
+        border-color: #334155 !important;
+        /* border-slate-700 */
+    }
 </style>
 
 <div id="sidebarOverlay" onclick="toggleSidebar()"
@@ -56,7 +68,7 @@
         </button>
     </div>
 
-    <nav class="mt-10">
+    <nav class="mt-10 flex-1 overflow-y-auto pr-2">
         <div class="flex justify-between items-center mb-4">
             <p class="text-xs uppercase text-slate-500 font-semibold tracking-wider">Progetti</p>
         </div>
@@ -169,7 +181,7 @@
         </ul>
     </nav>
 
-    <div class="absolute bottom-6 left-6 right-6 space-y-2">
+    <div class="mt-auto pt-6 border-t border-slate-800 space-y-2">
         <a href="export_data.php"
             class="flex items-center gap-3 text-slate-400 hover:text-white transition-colors p-2 rounded-md hover:bg-slate-800">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"

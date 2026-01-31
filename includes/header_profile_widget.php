@@ -9,7 +9,7 @@ if (!isset($userHeaderData)) {
     $userHeaderData = $stmtHeader->fetch(PDO::FETCH_ASSOC);
 }
 ?>
-<div class="absolute top-4 right-4 z-[60] flex items-center gap-3">
+<div class="absolute top-4 right-4 flex items-center gap-3">
 
     <!-- Notification Bell -->
     <div class="relative cursor-pointer hover:bg-slate-100 p-2 rounded-lg transition-colors group bg-white/80 backdrop-blur-sm border border-slate-200 shadow-sm"
