@@ -3,7 +3,7 @@
     aria-labelledby="modal-title-details" role="dialog" aria-modal="true">
     <div class="absolute inset-0 bg-gray-900/75 backdrop-blur-sm transition-opacity opacity-0"
         id="projectDetailsBackdrop" onclick="closeProjectDetailsModal()"></div>
-    <div class="bg-white rounded-xl shadow-2xl w-full max-w-2xl relative z-10 transform transition-all scale-95 opacity-0 flex flex-col max-h-[90vh]"
+    <div class="bg-white rounded-xl shadow-2xl w-full max-w-6xl w-[90%] relative z-10 transform transition-all scale-95 opacity-0 flex flex-col max-h-[90vh]"
         id="projectDetailsContent">
 
         <!-- Header -->
@@ -48,7 +48,8 @@
                 <div>
                     <label class="block text-sm font-medium text-slate-700 mb-1">Descrizione</label>
                     <textarea id="detailProjectDesc" rows="6"
-                        class="w-full border border-slate-300 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                        class="w-full border border-slate-300 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all duration-300 ease-in-out focus:min-h-[500px]"
+                        onfocus="setTimeout(() => this.scrollIntoView({ behavior: 'smooth', block: 'center' }), 50)"
                         placeholder="Descrivi il progetto, obiettivi, link utili..."></textarea>
                 </div>
                 <div class="flex justify-end pt-2">
