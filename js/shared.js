@@ -319,6 +319,8 @@ function closeProjectDetailsModal() {
 
     setTimeout(() => {
         modal.classList.add('hidden');
+        const desc = document.getElementById('detailProjectDesc');
+        if (desc) desc.style.minHeight = '';
     }, 300);
 }
 

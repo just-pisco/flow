@@ -162,6 +162,7 @@ function closeEditTaskModal() {
     editTaskContent.classList.add('opacity-0', 'scale-95');
     setTimeout(() => {
         editTaskModal.classList.add('hidden');
+        if (editTaskDesc) editTaskDesc.style.minHeight = '';
     }, 300);
 }
 
