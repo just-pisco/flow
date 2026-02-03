@@ -88,7 +88,6 @@ function updateNotificationBadge(count) {
     const badge = document.getElementById('headerNotifBadge');
     if (badge) {
         if (count > 0) {
-            badge.textContent = count > 9 ? '9+' : count;
             badge.classList.remove('hidden');
         } else {
             badge.classList.add('hidden');
