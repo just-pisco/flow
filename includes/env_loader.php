@@ -12,6 +12,12 @@ function loadEnv($path)
         }
 
         list($name, $value) = explode('=', $line, 2);
+        
+        // Rimuovi commenti inline e spazi
+        if (strpos($value, '#') !== false) {
+            $value = substr($value, 0, strpos($value, '#'));
+        }
+
         $name = trim($name);
         $value = trim($value);
 

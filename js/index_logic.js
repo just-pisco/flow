@@ -835,7 +835,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const el = document.getElementById('taskList');
     if (el && typeof Sortable !== 'undefined') {
         Sortable.create(el, {
-            handle: '.drag-handle',
+            // handle: '.drag-handle', // REMOVED: Allow drag on entire row
             animation: 150,
             ghostClass: 'sortable-ghost',
             chosenClass: 'sortable-chosen',

@@ -288,11 +288,11 @@ $isAnyTeamAdmin = $stmt->fetchColumn();
                         ?>
                         <div id="task-<?php echo $task['id']; ?>" data-id="<?php echo $task['id']; ?>"
                             onclick="openEditTask(<?php echo htmlspecialchars(json_encode($task)); ?>)"
-                            class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex flex-col sm:flex-row justify-between items-start sm:items-center transition-all cursor-pointer hover:shadow-md hover:border-indigo-300 <?php echo $isDone ? 'opacity-50' : ''; ?>">
+                            class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex flex-col sm:flex-row justify-between items-start sm:items-center transition-all cursor-grab active:cursor-grabbing hover:shadow-md hover:border-indigo-300 <?php echo $isDone ? 'opacity-50' : ''; ?>">
 
                             <div class="flex items-center gap-3 overflow-hidden w-full sm:w-auto">
                                 <!-- Drag Handle -->
-                                <div class="cursor-move drag-handle text-slate-300 hover:text-slate-500"
+                                <div class="cursor-grab drag-handle text-slate-300 hover:text-slate-500"
                                     onclick="event.stopPropagation()">
                                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
                                         stroke="currentColor">

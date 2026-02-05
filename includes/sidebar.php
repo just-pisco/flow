@@ -40,6 +40,25 @@
         border-color: #334155 !important;
         /* border-slate-700 */
     }
+    /* Custom Sidebar Scrollbar */
+    #sidebar nav::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    #sidebar nav::-webkit-scrollbar-track {
+        background: transparent;
+    }
+
+    #sidebar nav::-webkit-scrollbar-thumb {
+        background-color: #334155;
+        /* slate-700 */
+        border-radius: 3px;
+    }
+
+    #sidebar nav {
+        scrollbar-width: thin;
+        scrollbar-color: #334155 transparent;
+    }
 </style>
 
 <div id="sidebarOverlay" onclick="toggleSidebar()"
