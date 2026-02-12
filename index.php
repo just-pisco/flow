@@ -216,10 +216,10 @@ $isAnyTeamAdmin = $stmt->fetchColumn();
 
 
             <?php if ($project_id): ?>
-                <form action="add_task.php" method="POST" class="mt-6 flex flex-col md:flex-row gap-2">
+                <form id="addTaskForm" class="mt-6 flex flex-col md:flex-row gap-2">
                     <input type="hidden" name="project_id" value="<?php echo $project_id; ?>">
                     <div class="flex-1 flex flex-col md:flex-row gap-2">
-                        <input type="text" name="titolo" placeholder="Aggiungi un nuovo task..." required
+                        <input type="text" id="newTaskTitle" name="titolo" placeholder="Aggiungi un nuovo task..." required
                             class="w-full md:flex-1 border border-slate-300 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-sm">
 
                         <div class="relative w-full md:w-auto">
@@ -284,87 +284,8 @@ $isAnyTeamAdmin = $stmt->fetchColumn();
                     $stmt = $pdo->prepare($sqlTasks);
                     $stmt->execute($paramsTasks);
                     while ($task = $stmt->fetch()):
-                        $isDone = ($task['stato'] === 'completato');
-                        ?>
-                        <div id="task-<?php echo $task['id']; ?>" data-id="<?php echo $task['id']; ?>"
-                            onclick="openEditTask(<?php echo htmlspecialchars(json_encode($task)); ?>)"
-                            class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex flex-col sm:flex-row justify-between items-start sm:items-center transition-all cursor-grab active:cursor-grabbing hover:shadow-md hover:border-indigo-300 <?php echo $isDone ? 'opacity-50' : ''; ?>">
-
-                            <div class="flex items-center gap-3 overflow-hidden w-full sm:w-auto">
-                                <!-- Drag Handle -->
-                                <div class="cursor-grab drag-handle text-slate-300 hover:text-slate-500"
-                                    onclick="event.stopPropagation()">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
-                                        stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                            d="M4 8h16M4 16h16" />
-                                    </svg>
-                                </div>
-
-                                <input type="checkbox" onclick="event.stopPropagation()"
-                                    onchange="toggleTask(<?php echo $task['id']; ?>, this.checked)" <?php echo $isDone ? 'checked' : ''; ?>
-                                    class="w-5 h-5 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer">
-
-                                <span
-                                    class="task-title text-slate-700 font-medium whitespace-nowrap overflow-x-auto block w-full sm:max-w-xs md:max-w-sm <?php echo $isDone ? 'line-through' : ''; ?>"
-                                    style="-ms-overflow-style: none; scrollbar-width: none;"> <!-- Hide scrollbar Firefox/IE -->
-                                    <style>
-                                        /* Hide scrollbar Chrome/Safari/Webkit */
-                                        span::-webkit-scrollbar {
-                                            display: none;
-                                        }
-                                    </style>
-                                    <?php echo htmlspecialchars($task['titolo']); ?>
-                                </span>
-                            </div>
-
-                            <div class="flex items-center gap-2 mt-2 sm:mt-0 w-full sm:w-auto justify-end sm:justify-start">
-                                <?php if (!empty($task['scadenza'])):
-                                    $scadenza = new DateTime($task['scadenza']);
-                                    $oggi = new DateTime('today');
-                                    $differenza = $oggi->diff($scadenza);
-                                    $isScaduto = $scadenza < $oggi && !$isDone;
-                                    $isOggi = $scadenza == $oggi && !$isDone;
-
-                                    $dateClass = 'text-slate-400';
-                                    if ($isScaduto)
-                                        $dateClass = 'text-red-500 font-bold';
-                                    if ($isOggi)
-                                        $dateClass = 'text-orange-500 font-bold';
-                                    ?>
-                                    <span class="text-xs <?php echo $dateClass; ?> mr-2 flex items-center gap-1"
-                                        title="Scadenza: <?php echo $scadenza->format('d/m/Y'); ?>">
-                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24"
-                                            stroke="currentColor">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                        </svg>
-                                        <?php echo $scadenza->format('d M'); ?>
-                                    </span>
-                                <?php endif; ?>
-
-                                <?php
-                                $statusColor = $statusMap[$task['stato']] ?? '#64748b'; // Default slate
-                                $bgColor = hex2rgba($statusColor, 0.1);
-                                $textColor = $statusColor;
-                                ?>
-                                <div id="task-badge-<?php echo $task['id']; ?>"
-                                    onclick="openStatusMenu(event, <?php echo $task['id']; ?>)"
-                                    class="text-xs font-bold uppercase px-2 py-1 rounded cursor-pointer hover:opacity-80 transition-opacity"
-                                    style="background-color: <?php echo $bgColor; ?>; color: <?php echo $textColor; ?>;">
-                                    <?php echo str_replace('_', ' ', $task['stato']); ?>
-                                </div>
-                                <button onclick="event.stopPropagation(); deleteTask(<?php echo $task['id']; ?>)"
-                                    class="text-slate-400 hover:text-red-500 p-1 transition-colors">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
-                                        stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                            d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                    </svg>
-                                </button>
-                            </div>
-                        </div>
-                    <?php endwhile; ?>
+                        include 'includes/task_row.php';
+                    endwhile; ?>
                 </div>
             <?php else: ?>
                 <p class="mt-10 text-slate-500 italic text-center text-lg">Seleziona un progetto dalla sidebar per iniziare
@@ -838,7 +759,7 @@ $isAnyTeamAdmin = $stmt->fetchColumn();
     <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
     <script src="js/shared.js?v=<?php echo time(); ?>"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/flowbite/2.2.1/datepicker.min.js"></script>
-    <script src="js/index_logic.js"></script>
+    <script src="js/index_logic.js?v=<?php echo time(); ?>"></script>
 
     <script>
         window.GOOGLE_CONFIG = {
@@ -846,6 +767,109 @@ $isAnyTeamAdmin = $stmt->fetchColumn();
             apiKey: "<?php echo getenv('GOOGLE_API_KEY'); ?>"
         };
     </script>
+    <!-- Inline Task Logic to bypass cache issues -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // Auto-focus on task input for immediate typing
+            const titleInput = document.getElementById('newTaskTitle');
+            if (titleInput) {
+                titleInput.focus();
+            }
+
+            const addTaskForm = document.getElementById('addTaskForm');
+            if (addTaskForm) {
+                // Remove any existing listeners by cloning (optional but safe)
+                // const newForm = addTaskForm.cloneNode(true);
+                // addTaskForm.parentNode.replaceChild(newForm, addTaskForm);
+                // Actually, cloning kills internal state. Better to just ensure our listener is last or unique.
+                // Since we commented out the other one, this should be fine.
+
+                addTaskForm.addEventListener('submit', function(event) {
+                    event.preventDefault(); // CRITICAL: Execute first
+                    event.stopPropagation();
+                    
+                    console.log("Inline handleAddTask triggered");
+                    
+                    const form = event.target;
+                    const formData = new FormData(form);
+                    const submitBtn = form.querySelector('button[type="submit"]');
+
+                    if (submitBtn) submitBtn.disabled = true;
+
+                    // Force AJAX param
+                    formData.append('ajax', '1');
+
+                    fetch('add_task.php', {
+                        method: 'POST',
+                        body: formData,
+                        headers: {
+                            'Accept': 'application/json' // Explicitly ask for JSON
+                        }
+                    })
+                    .then(response => {
+                         // Check for JSON content type
+                         const contentType = response.headers.get("content-type");
+                         if (contentType && contentType.indexOf("application/json") !== -1) {
+                             return response.json();
+                         } else {
+                             return response.text().then(text => {
+                                 // Try to parse anyway, or throw error
+                                 try {
+                                     return JSON.parse(text);
+                                 } catch (e) {
+                                     console.error("Server returned non-JSON:", text);
+                                     throw new Error("Risposta del server non valida.");
+                                 }
+                             });
+                         }
+                    })
+                    .then(data => {
+                        if (data.success) {
+                            if (data.html) {
+                                // APPEND HTML
+                                const taskList = document.getElementById('taskList');
+                                if (taskList) {
+                                    const tempDiv = document.createElement('div');
+                                    tempDiv.innerHTML = data.html.trim(); 
+                                    const newTask = tempDiv.firstChild;
+
+                                    if (newTask) {
+                                        // Prepend to list
+                                        taskList.insertBefore(newTask, taskList.firstChild);
+                                        // Animation
+                                        newTask.style.animation = "highlight 2s ease";
+                                    }
+                                }
+                            } else {
+                                // Fallback if HTML missing? Reload?
+                                location.reload();
+                                return;
+                            }
+
+                            // Clear input and focus
+                            const titleInput = document.getElementById('newTaskTitle');
+                            if (titleInput) {
+                                titleInput.value = '';
+                                titleInput.focus();
+                            }
+                        } else {
+                            alert('Errore: ' + (data.error || 'Errore sconosciuto'));
+                        }
+                    })
+                    .catch(err => {
+                        console.error(err);
+                        alert("Errore di connessione: " + err.message);
+                    })
+                    .finally(() => {
+                        if (submitBtn) submitBtn.disabled = false;
+                    });
+                });
+            } else { 
+                console.error("Form addTaskForm not found in DOM");
+            }
+        });
+    </script>
+
     <!-- Google Auto-Sync Logic (Headless) -->
     <script src="js/google_config.js"></script>
     <script src="js/google_calendar.js"></script>

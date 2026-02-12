@@ -1,8 +1,104 @@
 
+console.log("Flow Logic Loaded v" + new Date().getTime());
+
 // State Variables
 let currentDeleteTaskId = null;
 let currentEditProjectId = null;
 let currentDeleteProjectId = null;
+
+function handleAddTask(event) {
+    console.log("handleAddTask triggered");
+    // alert("Debug: Adding Task via JS"); // Uncomment if needed for hard check
+    event.preventDefault();
+    const form = event.target;
+    const formData = new FormData(form);
+    const submitBtn = form.querySelector('button[type="submit"]');
+
+    // Disable button to prevent double submit
+    if (submitBtn) submitBtn.disabled = true;
+
+    // Force AJAX detection by adding a param, in case headers are stripped
+    formData.append('ajax', '1');
+
+    fetch('add_task.php', {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'Accept': 'application/json'
+        }
+    })
+        .then(response => {
+            if (response.headers.get('content-type')?.includes('application/json')) {
+                return response.json();
+            } else {
+                // Fallback for non-JSON response (e.g. error page or redirect)
+                return response.text().then(text => { throw new Error('Non-JSON response') });
+            }
+        })
+        .then(data => {
+            if (data.success) {
+                // Clear title input
+                const titleInput = document.getElementById('newTaskTitle');
+                if (titleInput) {
+                    titleInput.value = '';
+                    titleInput.focus();
+                }
+
+                // Reload page to show new task (simplest way to ensure correct rendering order/state)
+                // OR dynamically append. Given complex logic (drag handles, badges, etc), reload might be needed 
+                // BUT user asked for focus.
+                // If we reload, we lose focus unless we store a flag.
+
+                // Let's TRY to reload and restore focus via sessionStorage? 
+                // No, user explicitly wants "input receive focus again... without touching". 
+                // Pure AJAX + append is best.
+
+                // To properly append, we need to replicate the HTML structure of a task row.
+                // That is complex to duplicate in JS. 
+                // EASIER ALTERNATIVE: partial page reload or fetch just the task list?
+                // OR: We reload the page, and on load check if we just added a task, then focus.
+
+                // Reload page to show new task (simplest way to ensure correct rendering order/state)
+                console.log("Task added successfully, reloading with focus flag...");
+                sessionStorage.setItem('focusNewTaskInput', 'true');
+                location.reload();
+            } else {
+                alert('Errore: ' + (data.error || 'Impossibile aggiungere task'));
+            }
+        })
+        .catch(err => {
+            console.error(err);
+            // If JSON fails, maybe standard submit would work?
+            // form.submit(); // fallback?
+            location.reload();
+        })
+        .finally(() => {
+            if (submitBtn) submitBtn.disabled = false;
+        });
+}
+
+// Check for focus flag on load
+document.addEventListener('DOMContentLoaded', () => {
+    if (sessionStorage.getItem('focusNewTaskInput') === 'true') {
+        const titleInput = document.getElementById('newTaskTitle');
+        if (titleInput) {
+            titleInput.focus();
+        }
+        sessionStorage.removeItem('focusNewTaskInput');
+    }
+
+    // Event listener moved to inline script in index.php to avoid caching issues
+    /*
+    const addTaskForm = document.getElementById('addTaskForm');
+    if (addTaskForm) {
+        console.log("Attaching submit listener to addTaskForm");
+        addTaskForm.addEventListener('submit', handleAddTask);
+    } else {
+        console.error("addTaskForm not found!");
+    }
+    */
+});
+
 
 // Modal Selectors
 const modal = document.getElementById('deleteModal');
