@@ -48,6 +48,19 @@
                             class="w-full border border-slate-300 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-indigo-500">
                     </div>
                     <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-1">Colore Progetto</label>
+                        <div class="flex items-center gap-2">
+                             <style>
+                                #detailProjectColor::-webkit-color-swatch-wrapper { padding: 0; }
+                                #detailProjectColor::-webkit-color-swatch { border: none; border-radius: 0.25rem; }
+                             </style>
+                             <input type="color" id="detailProjectColor" 
+                                class="h-9 w-9 p-0 border-none rounded bg-transparent cursor-pointer overflow-hidden shadow-sm"
+                                title="Scegli colore" style="-webkit-appearance: none;">
+                             <span class="text-xs text-slate-500">Clicca per cambiare colore</span>
+                        </div>
+                    </div>
+                    <div>
                         <label class="block text-sm font-medium text-slate-700 mb-1">Descrizione</label>
                         <textarea id="detailProjectDesc" rows="6"
                             class="w-full border border-slate-300 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all duration-300 ease-in-out"

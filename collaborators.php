@@ -13,7 +13,7 @@ if (!isset($_SESSION['user_id'])) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Flow - Amici</title>
+    <title>Flow - Collaboratori</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
     <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
@@ -38,18 +38,18 @@ if (!isset($_SESSION['user_id'])) {
             <div class="max-w-4xl mx-auto mt-10 md:mt-0">
                 <header class="flex justify-between items-center mb-8">
                     <div class="flex items-center gap-4">
-                        <h1 class="text-3xl font-bold text-slate-800">I Miei Contatti</h1>
+                        <h1 class="text-3xl font-bold text-slate-800">I Miei Collaboratori</h1>
                     </div>
                 </header>
 
                 <!-- Tabs -->
                 <div class="flex border-b border-slate-200 mb-6">
-                    <button onclick="switchTab('friends')" id="tab-friends"
+                    <button onclick="switchTab('collaborators')" id="tab-collaborators"
                         class="px-6 py-3 border-b-2 font-medium text-sm transition-colors text-indigo-600 border-indigo-600">I
-                        Miei Amici</button>
+                        Miei Collaboratori</button>
                     <button onclick="switchTab('add')" id="tab-add"
                         class="px-6 py-3 border-b-2 border-transparent text-slate-500 hover:text-slate-700 font-medium text-sm transition-colors">Aggiungi
-                        Amico</button>
+                        Collaboratore</button>
                     <button onclick="switchTab('requests')" id="tab-requests"
                         class="px-6 py-3 border-b-2 border-transparent text-slate-500 hover:text-slate-700 font-medium text-sm transition-colors relative">
                         Richieste
@@ -62,9 +62,9 @@ if (!isset($_SESSION['user_id'])) {
                 </div>
 
                 <!-- Tab Contents -->
-                <div id="content-friends" class="space-y-4">
-                    <!-- Friend List -->
-                    <div id="friendListContainer" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div id="content-collaborators" class="space-y-4">
+                    <!-- Collaborator List -->
+                    <div id="collaboratorListContainer" class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <p class="text-slate-400 italic col-span-2">Caricamento...</p>
                     </div>
                 </div>
@@ -94,18 +94,18 @@ if (!isset($_SESSION['user_id'])) {
         </main>
     </div>
 
-    <!-- Remove Friend Modal -->
-    <div id="removeFriendModal"
+    <!-- Remove Collaborator Modal -->
+    <div id="removeCollaboratorModal"
         class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
         <div class="bg-white p-6 rounded-xl w-full max-w-sm relative">
-            <h3 class="text-lg font-bold mb-2 text-red-600">Rimuovi Amico</h3>
-            <p class="text-sm text-slate-500 mb-6">Sei sicuro di voler rimuovere <strong id="removeFriendName"
-                    class="text-slate-800"></strong> dagli amici?</p>
-            <input type="hidden" id="removeFriendId">
+            <h3 class="text-lg font-bold mb-2 text-red-600">Rimuovi Collaboratore</h3>
+            <p class="text-sm text-slate-500 mb-6">Sei sicuro di voler rimuovere <strong id="removeCollaboratorName"
+                    class="text-slate-800"></strong> dai collaboratori?</p>
+            <input type="hidden" id="removeCollaboratorId">
             <div class="flex justify-end gap-2">
-                <button onclick="document.getElementById('removeFriendModal').classList.add('hidden')"
+                <button onclick="document.getElementById('removeCollaboratorModal').classList.add('hidden')"
                     class="px-4 py-2 text-slate-600 rounded hover:bg-slate-100">Annulla</button>
-                <button onclick="executeRemoveFriend()"
+                <button onclick="executeRemoveCollaborator()"
                     class="px-4 py-2 bg-red-600 text-white rounded font-bold hover:bg-red-700">Rimuovi</button>
             </div>
         </div>
@@ -115,12 +115,12 @@ if (!isset($_SESSION['user_id'])) {
     <script>
         // Init
         document.addEventListener('DOMContentLoaded', () => {
-            loadFriends();
+            loadCollaborators();
             loadRequests();
         });
 
         function switchTab(tab) {
-            ['friends', 'add', 'requests'].forEach(t => {
+            ['collaborators', 'add', 'requests'].forEach(t => {
                 document.getElementById('content-' + t).classList.add('hidden');
                 document.getElementById('tab-' + t).classList.remove('text-indigo-600', 'border-indigo-600');
                 document.getElementById('tab-' + t).classList.add('text-slate-500', 'border-transparent');
@@ -130,14 +130,14 @@ if (!isset($_SESSION['user_id'])) {
             document.getElementById('tab-' + tab).classList.remove('text-slate-500', 'border-transparent');
         }
 
-        async function loadFriends() {
+        async function loadCollaborators() {
             try {
-                const res = await fetch('api_friends.php?action=list_friends');
+                const res = await fetch('api_collaborators.php?action=list_collaborators');
                 const json = await res.json();
                 if (json.success) {
-                    const container = document.getElementById('friendListContainer');
+                    const container = document.getElementById('collaboratorListContainer');
                     if (json.data.length === 0) {
-                        container.innerHTML = '<p class="text-slate-500 italic col-span-2">Non hai ancora amici. Cerca qualcuno!</p>';
+                        container.innerHTML = '<p class="text-slate-500 italic col-span-2">Non hai ancora collaboratori. Cerca qualcuno!</p>';
                         return;
                     }
                     container.innerHTML = json.data.map(u => `
@@ -150,8 +150,8 @@ if (!isset($_SESSION['user_id'])) {
                                 </div>
                              </div>
                              <div class="flex items-center gap-2">
-                                <span class="text-xs text-green-600 bg-green-50 px-2 py-1 rounded-full font-medium">Amico</span>
-                                <button onclick="removeFriend(${u.id}, '${u.username}')" class="text-red-400 hover:text-red-600 p-1 rounded-full hover:bg-red-50" title="Rimuovi Amico">
+                                <span class="text-xs text-green-600 bg-green-50 px-2 py-1 rounded-full font-medium">Collaboratore</span>
+                                <button onclick="removeCollaborator(${u.id}, '${u.username}')" class="text-red-400 hover:text-red-600 p-1 rounded-full hover:bg-red-50" title="Rimuovi Collaboratore">
                                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                                     </svg>
@@ -165,7 +165,7 @@ if (!isset($_SESSION['user_id'])) {
 
         async function loadRequests() {
             try {
-                const res = await fetch('api_friends.php?action=list_requests');
+                const res = await fetch('api_collaborators.php?action=list_requests');
                 const json = await res.json();
                 if (json.success) {
                     const container = document.getElementById('requestsListContainer');
@@ -188,8 +188,8 @@ if (!isset($_SESSION['user_id'])) {
                                 </div>
                              </div>
                              <div class="flex gap-2">
-                                <button onclick="respondRequest(${req.friendship_id}, 'accept')" class="px-3 py-1 bg-indigo-600 text-white rounded hover:bg-indigo-700 text-sm font-bold">Accetta</button>
-                                <button onclick="respondRequest(${req.friendship_id}, 'decline')" class="px-3 py-1 bg-white border border-slate-300 text-slate-600 rounded hover:bg-slate-50 text-sm">Rifiuta</button>
+                                <button onclick="respondRequest(${req.collaboration_id}, 'accept')" class="px-3 py-1 bg-indigo-600 text-white rounded hover:bg-indigo-700 text-sm font-bold">Accetta</button>
+                                <button onclick="respondRequest(${req.collaboration_id}, 'decline')" class="px-3 py-1 bg-white border border-slate-300 text-slate-600 rounded hover:bg-slate-50 text-sm">Rifiuta</button>
                              </div>
                         </div>
                     `).join('');
@@ -199,16 +199,16 @@ if (!isset($_SESSION['user_id'])) {
 
         async function respondRequest(id, decision) {
             try {
-                const res = await fetch('api_friends.php?action=respond_request', {
+                const res = await fetch('api_collaborators.php?action=respond_request', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ friendship_id: id, decision })
+                    body: JSON.stringify({ collaboration_id: id, decision })
                 });
                 const json = await res.json();
                 if (json.success) {
-                    showToast(decision === 'accept' ? 'Amico aggiunto!' : 'Richiesta rifiutata.', 'success');
+                    showToast(decision === 'accept' ? 'Collaboratore aggiunto!' : 'Richiesta rifiutata.', 'success');
                     loadRequests();
-                    if (decision === 'accept') loadFriends();
+                    if (decision === 'accept') loadCollaborators();
                 } else showToast('Errore: ' + json.error, 'error');
             } catch (e) { showToast('Errore di rete', 'error'); }
         }
@@ -223,7 +223,7 @@ if (!isset($_SESSION['user_id'])) {
             }
             searchTimeout = setTimeout(async () => {
                 try {
-                    const res = await fetch('api_friends.php?action=search_global&q=' + encodeURIComponent(q));
+                    const res = await fetch('api_collaborators.php?action=search_global&q=' + encodeURIComponent(q));
                     const json = await res.json();
                     if (json.success) {
                         const container = document.getElementById('searchResults');
@@ -233,12 +233,12 @@ if (!isset($_SESSION['user_id'])) {
                         }
                         container.innerHTML = json.data.map(u => {
                             let btn = '';
-                            if (u.friendship_status === 'none') {
+                            if (u.collaboration_status === 'none') {
                                 btn = `<button onclick="sendRequest(${u.id})" class="px-3 py-1 bg-indigo-100 text-indigo-700 rounded hover:bg-indigo-200 text-sm font-bold">Aggiungi</button>`;
-                            } else if (u.friendship_status === 'pending') {
+                            } else if (u.collaboration_status === 'pending') {
                                 btn = `<span class="text-xs text-orange-500 font-medium">${u.is_requester ? 'Richiesta Inviata' : 'Richiesta Ricevuta'}</span>`;
                             } else {
-                                btn = `<span class="text-xs text-green-600 font-medium">Già Amici</span>`;
+                                btn = `<span class="text-xs text-green-600 font-medium">Già Collaboratori</span>`;
                             }
 
                             return `
@@ -260,7 +260,7 @@ if (!isset($_SESSION['user_id'])) {
 
         async function sendRequest(userId) {
             try {
-                const res = await fetch('api_friends.php?action=send_request', {
+                const res = await fetch('api_collaborators.php?action=send_request', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ user_id: userId })
@@ -273,27 +273,27 @@ if (!isset($_SESSION['user_id'])) {
             } catch (e) { showToast('Errore di rete', 'error'); }
         }
 
-        function removeFriend(friendId, username) {
-            document.getElementById('removeFriendId').value = friendId;
-            document.getElementById('removeFriendName').textContent = username;
-            document.getElementById('removeFriendModal').classList.remove('hidden');
+        function removeCollaborator(friendId, username) {
+            document.getElementById('removeCollaboratorId').value = friendId;
+            document.getElementById('removeCollaboratorName').textContent = username;
+            document.getElementById('removeCollaboratorModal').classList.remove('hidden');
         }
 
-        async function executeRemoveFriend() {
-            const friendId = document.getElementById('removeFriendId').value;
-            const username = document.getElementById('removeFriendName').textContent;
+        async function executeRemoveCollaborator() {
+            const friendId = document.getElementById('removeCollaboratorId').value;
+            const username = document.getElementById('removeCollaboratorName').textContent;
 
             try {
-                const res = await fetch('api_friends.php?action=remove_friend', {
+                const res = await fetch('api_collaborators.php?action=remove_collaborator', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ friend_user_id: friendId })
+                    body: JSON.stringify({ user_id: friendId })
                 });
                 const json = await res.json();
                 if (json.success) {
-                    showToast(`${username} rimosso dagli amici.`, 'success');
-                    document.getElementById('removeFriendModal').classList.add('hidden');
-                    loadFriends();
+                    showToast(`${username} rimosso dai collaboratori.`, 'success');
+                    document.getElementById('removeCollaboratorModal').classList.add('hidden');
+                    loadCollaborators();
                 } else showToast('Errore: ' + (json.error || 'Sconosciuto'), 'error');
             } catch (e) { showToast('Errore di rete', 'error'); }
         }

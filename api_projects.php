@@ -16,11 +16,11 @@ try {
     if ($action === 'list_sidebar') {
         // Same logic as in sidebar.php template
         $stmt = $pdo->prepare("
-            SELECT p.id, p.nome, pm.role 
+            SELECT p.id, p.nome, p.colore, pm.role 
             FROM projects p 
             JOIN project_members pm ON p.id = pm.project_id 
             WHERE pm.user_id = ? 
-            ORDER BY p.data_modifica DESC
+            ORDER BY p.ordinamento ASC, p.data_modifica DESC
         ");
         $stmt->execute([$_SESSION['user_id']]);
         $projects = $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -39,8 +39,8 @@ try {
             throw new Exception("Accesso negato.");
         }
 
-        // Get details
-        $stmt = $pdo->prepare("SELECT id, nome, descrizione, data_creazione as created_at FROM projects WHERE id = ?");
+        // Get details (include colore)
+        $stmt = $pdo->prepare("SELECT id, nome, descrizione, colore, data_creazione as created_at FROM projects WHERE id = ?");
         $stmt->execute([$projectId]);
         $project = $stmt->fetch(PDO::FETCH_ASSOC);
 
@@ -63,6 +63,7 @@ try {
         $projectId = $input['project_id'];
         $nome = trim($input['nome']);
         $descrizione = trim($input['descrizione']);
+        $colore = isset($input['colore']) ? trim($input['colore']) : '#6366f1';
 
         // Check Owner/Admin role?
         // Let's allow editors too? Usually only admins change project settings.
@@ -74,8 +75,8 @@ try {
             throw new Exception("Solo il proprietario può modificare i dettagli.");
         }
 
-        $stmt = $pdo->prepare("UPDATE projects SET nome = ?, descrizione = ?, data_modifica = NOW() WHERE id = ?");
-        $stmt->execute([$nome, $descrizione, $projectId]);
+        $stmt = $pdo->prepare("UPDATE projects SET nome = ?, descrizione = ?, colore = ?, data_modifica = NOW() WHERE id = ?");
+        $stmt->execute([$nome, $descrizione, $colore, $projectId]);
 
         echo json_encode(['success' => true]);
 

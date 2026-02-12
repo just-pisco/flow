@@ -30,7 +30,7 @@ try {
                 FROM users u
                 LEFT JOIN team_members tm_me ON tm_me.user_id = :me
                 LEFT JOIN team_members tm_other ON tm_other.team_id = tm_me.team_id AND tm_other.user_id = u.id
-                LEFT JOIN friendships f ON (
+                LEFT JOIN collaborations f ON (
                     (f.requester_id = :me AND f.receiver_id = u.id) OR 
                     (f.requester_id = u.id AND f.receiver_id = :me)
                 ) AND f.status = 'accepted'

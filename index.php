@@ -46,7 +46,6 @@ $isAnyTeamAdmin = $stmt->fetchColumn();
     <title>Flow - Gestione Progetti</title>
     <title>Flow - Gestione Progetti</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.2/Sortable.min.js"></script>
 </head>
 
 <body class="bg-gray-50 text-gray-900">
@@ -220,7 +219,7 @@ $isAnyTeamAdmin = $stmt->fetchColumn();
                     <input type="hidden" name="project_id" value="<?php echo $project_id; ?>">
                     <div class="flex-1 flex flex-col md:flex-row gap-2">
                         <input type="text" id="newTaskTitle" name="titolo" placeholder="Aggiungi un nuovo task..." required
-                            class="w-full md:flex-1 border border-slate-300 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-sm">
+                            class="w-full md:flex-1 border border-slate-300 rounded-lg p-3 h-12 focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-sm">
 
                         <div class="relative w-full md:w-auto">
                             <div class="absolute inset-y-0 start-0 flex items-center ps-3.5 pointer-events-none">
@@ -232,12 +231,12 @@ $isAnyTeamAdmin = $stmt->fetchColumn();
                             </div>
                             <input type="text" name="scadenza" datepicker datepicker-autohide datepicker-format="dd/mm/yyyy"
                                 datepicker-orientation="bottom right"
-                                class="bg-white border border-slate-300 text-slate-900 text-sm rounded-lg focus:ring-indigo-500 focus:border-indigo-500 block w-full md:w-40 ps-10 p-3"
+                                class="bg-white border border-slate-300 text-slate-900 text-sm rounded-lg focus:ring-indigo-500 focus:border-indigo-500 block w-full md:w-40 ps-10 p-3 h-12"
                                 placeholder="Scadenza">
                         </div>
                     </div>
                     <button type="submit"
-                        class="bg-indigo-600 text-white px-6 py-2 rounded-lg font-bold hover:bg-indigo-700 transition w-full sm:w-auto">Aggiungi</button>
+                        class="bg-indigo-600 text-white px-6 py-2 rounded-lg font-bold hover:bg-indigo-700 transition w-full sm:w-auto h-12 flex items-center justify-center">Aggiungi</button>
                 </form>
 
                 </form>

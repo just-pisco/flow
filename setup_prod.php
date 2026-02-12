@@ -163,6 +163,21 @@ try {
             $pdo->exec("ALTER TABLE projects ADD COLUMN descrizione TEXT DEFAULT NULL");
             echo "- Added 'descrizione' to projects.\n";
         }
+        }
+    // Projects: ordinamento
+    try {
+        $pdo->query("SELECT ordinamento FROM projects LIMIT 1");
+    } catch (Exception $e) {
+        $pdo->exec("ALTER TABLE projects ADD COLUMN ordinamento INT DEFAULT 0");
+        echo "- Added 'ordinamento' to projects.\n";
+    }
+
+    // Projects: colore
+    try {
+        $pdo->query("SELECT colore FROM projects LIMIT 1");
+    } catch (Exception $e) {
+        $pdo->exec("ALTER TABLE projects ADD COLUMN colore VARCHAR(7) DEFAULT '#6366f1'"); // Default indigo-500
+        echo "- Added 'colore' to projects.\n";
     }
 
     // 2b. Project Attachments
@@ -281,7 +296,19 @@ try {
     echo "- Notifications table checked.\n";
 
     // FRIENDSHIPS
-    $pdo->exec("CREATE TABLE IF NOT EXISTS friendships (
+    // COLLABORATIONS (ex Friendships)
+    // Check if old table exists
+    try {
+        $result = $pdo->query("SHOW TABLES LIKE 'friendships'");
+        if ($result->rowCount() > 0) {
+            $pdo->exec("RENAME TABLE friendships TO collaborations");
+            echo "- Renamed 'friendships' to 'collaborations'.\n";
+        }
+    } catch (Exception $e) {
+        // Ignore
+    }
+
+    $pdo->exec("CREATE TABLE IF NOT EXISTS collaborations (
         id INT AUTO_INCREMENT PRIMARY KEY,
         requester_id INT NOT NULL,
         receiver_id INT NOT NULL,
@@ -289,9 +316,9 @@ try {
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (requester_id) REFERENCES users(id) ON DELETE CASCADE,
         FOREIGN KEY (receiver_id) REFERENCES users(id) ON DELETE CASCADE,
-        UNIQUE KEY unique_friendship (requester_id, receiver_id)
+        UNIQUE KEY unique_collaboration (requester_id, receiver_id)
     )");
-    echo "- Friendships table checked.\n";
+    echo "- Collaborations table checked.\n";
 
     // 4. Backfill Project Owners into project_members
     echo "Backfilling project owners...\n";

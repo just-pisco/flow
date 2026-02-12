@@ -30,34 +30,34 @@ try {
             $stmt->execute(["%$query%", $currentUserId]);
             $results = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-            // Enrich with status (friend, pending, none)
+            // Enrich with status (collaborator, pending, none)
             foreach ($results as &$user) {
                 $stmtStatus = $pdo->prepare("
-                    SELECT status, requester_id FROM friendships 
+                    SELECT status, requester_id FROM collaborations 
                     WHERE (requester_id = ? AND receiver_id = ?) 
                        OR (requester_id = ? AND receiver_id = ?)
                 ");
                 $stmtStatus->execute([$currentUserId, $user['id'], $user['id'], $currentUserId]);
-                $friendship = $stmtStatus->fetch(PDO::FETCH_ASSOC);
+                $collaboration = $stmtStatus->fetch(PDO::FETCH_ASSOC);
 
-                if ($friendship) {
-                    $user['friendship_status'] = $friendship['status'];
-                    $user['is_requester'] = ($friendship['requester_id'] == $currentUserId);
+                if ($collaboration) {
+                    $user['collaboration_status'] = $collaboration['status'];
+                    $user['is_requester'] = ($collaboration['requester_id'] == $currentUserId);
                 } else {
-                    $user['friendship_status'] = 'none';
+                    $user['collaboration_status'] = 'none';
                 }
             }
 
             echo json_encode(['success' => true, 'data' => $results]);
 
-        } elseif ($action === 'list_friends') {
-            // Get accepted friends
+        } elseif ($action === 'list_collaborators') {
+            // Get accepted collaborators
             $stmt = $pdo->prepare("
                 SELECT u.id, u.username, u.nome, u.cognome, u.profile_image
-                FROM friendships f
-                JOIN users u ON (f.requester_id = u.id OR f.receiver_id = u.id)
-                WHERE (f.requester_id = ? OR f.receiver_id = ?) 
-                  AND f.status = 'accepted'
+                FROM collaborations c
+                JOIN users u ON (c.requester_id = u.id OR c.receiver_id = u.id)
+                WHERE (c.requester_id = ? OR c.receiver_id = ?) 
+                  AND c.status = 'accepted'
                   AND u.id != ?
             ");
             $stmt->execute([$currentUserId, $currentUserId, $currentUserId]);
@@ -66,17 +66,17 @@ try {
         } elseif ($action === 'list_requests') {
             // Incoming pending requests
             $stmt = $pdo->prepare("
-                SELECT f.id as friendship_id, u.id as user_id, u.username, u.nome, u.cognome, u.profile_image, f.created_at
-                FROM friendships f
-                JOIN users u ON f.requester_id = u.id
-                WHERE f.receiver_id = ? AND f.status = 'pending'
+                SELECT c.id as collaboration_id, u.id as user_id, u.username, u.nome, u.cognome, u.profile_image, c.created_at
+                FROM collaborations c
+                JOIN users u ON c.requester_id = u.id
+                WHERE c.receiver_id = ? AND c.status = 'pending'
             ");
             $stmt->execute([$currentUserId]);
             echo json_encode(['success' => true, 'data' => $stmt->fetchAll(PDO::FETCH_ASSOC)]);
 
         } elseif ($action === 'pending_count') {
             // Count pending incoming requests
-            $stmt = $pdo->prepare("SELECT COUNT(*) FROM friendships WHERE receiver_id = ? AND status = 'pending'");
+            $stmt = $pdo->prepare("SELECT COUNT(*) FROM collaborations WHERE receiver_id = ? AND status = 'pending'");
             $stmt->execute([$currentUserId]);
             echo json_encode(['success' => true, 'count' => $stmt->fetchColumn()]);
         }
@@ -91,27 +91,27 @@ try {
 
             // Check existence
             $stmt = $pdo->prepare("
-                SELECT id FROM friendships 
+                SELECT id FROM collaborations 
                 WHERE (requester_id = ? AND receiver_id = ?) 
                    OR (requester_id = ? AND receiver_id = ?)
             ");
             $stmt->execute([$currentUserId, $targetUserId, $targetUserId, $currentUserId]);
             if ($stmt->fetch()) {
-                throw new Exception("Richiesta già esistente o siete già amici.");
+                throw new Exception("Richiesta già esistente o siete già collaboratori.");
             }
 
-            $stmt = $pdo->prepare("INSERT INTO friendships (requester_id, receiver_id) VALUES (?, ?)");
+            $stmt = $pdo->prepare("INSERT INTO collaborations (requester_id, receiver_id) VALUES (?, ?)");
             $stmt->execute([$currentUserId, $targetUserId]);
 
             echo json_encode(['success' => true]);
 
         } elseif ($action === 'respond_request') {
-            $friendshipId = $input['friendship_id'];
+            $collaborationId = $input['collaboration_id'];
             $decision = $input['decision']; // 'accept' or 'decline'
 
             // Verify I am the receiver
-            $stmt = $pdo->prepare("SELECT receiver_id FROM friendships WHERE id = ? AND status = 'pending'");
-            $stmt->execute([$friendshipId]);
+            $stmt = $pdo->prepare("SELECT receiver_id FROM collaborations WHERE id = ? AND status = 'pending'");
+            $stmt->execute([$collaborationId]);
             $receiver = $stmt->fetchColumn();
 
             if ($receiver != $currentUserId) {
@@ -119,21 +119,21 @@ try {
             }
 
             if ($decision === 'accept') {
-                $stmt = $pdo->prepare("UPDATE friendships SET status = 'accepted' WHERE id = ?");
-                $stmt->execute([$friendshipId]);
+                $stmt = $pdo->prepare("UPDATE collaborations SET status = 'accepted' WHERE id = ?");
+                $stmt->execute([$collaborationId]);
             } else {
-                $stmt = $pdo->prepare("DELETE FROM friendships WHERE id = ?");
-                $stmt->execute([$friendshipId]);
+                $stmt = $pdo->prepare("DELETE FROM collaborations WHERE id = ?");
+                $stmt->execute([$collaborationId]);
             }
 
             echo json_encode(['success' => true]);
 
-        } elseif ($action === 'remove_friend') {
-            $friendUserId = $input['friend_user_id'];
+        } elseif ($action === 'remove_collaborator') {
+            $friendUserId = $input['user_id']; // renamed in js call
 
-            // Delete friendship where I am requester OR receiver, and other is $friendUserId
+            // Delete collaboration where I am requester OR receiver, and other is $friendUserId
             $stmt = $pdo->prepare("
-                DELETE FROM friendships 
+                DELETE FROM collaborations 
                 WHERE (requester_id = ? AND receiver_id = ?) 
                    OR (requester_id = ? AND receiver_id = ?)
             ");

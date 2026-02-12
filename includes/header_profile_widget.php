@@ -13,47 +13,117 @@ if (!isset($userHeaderData)) {
 // Buffer Profile HTML for reuse in layout
 ob_start();
 ?>
-<a href="profile.php"
-    class="flex items-center gap-2 bg-white rounded-lg p-1 pl-3 pr-1 shadow-sm border border-slate-200 hover:shadow-md hover:border-indigo-300 transition-all group no-underline text-slate-700">
-    <span class="text-xs font-bold group-hover:text-indigo-600 transition-colors mr-1">
-        <?php echo htmlspecialchars($userHeaderData['username']); ?>
-    </span>
+<div class="relative group" id="userDropdownContainer">
+    <button onclick="toggleUserDropdown()"
+        class="flex items-center gap-2 bg-white rounded-lg p-1 pl-3 pr-1 shadow-sm border border-slate-200 hover:shadow-md hover:border-indigo-300 transition-all no-underline text-slate-700 focus:outline-none">
+        
+        <span class="text-xs font-bold w-full text-right block truncate max-w-[100px] md:max-w-[150px] mr-1">
+            <?php echo htmlspecialchars($userHeaderData['username']); ?>
+        </span>
 
-    <?php if (!empty($userHeaderData['profile_image'])): ?>
-        <img src="uploads/avatars/<?php echo htmlspecialchars($userHeaderData['profile_image']); ?>?t=<?php echo time(); ?>"
-            class="w-9 h-9 rounded-lg object-cover border-2 border-white shadow-sm" alt="Profilo">
-    <?php else:
-        $initials = strtoupper(substr($userHeaderData['username'], 0, 2));
-        if (!empty($userHeaderData['nome'])) {
-            if (!empty($userHeaderData['cognome'])) {
-                $initials = strtoupper(substr($userHeaderData['nome'], 0, 1) . substr($userHeaderData['cognome'], 0, 1));
-            } else {
-                $initials = strtoupper(substr($userHeaderData['nome'], 0, 2));
+        <?php if (!empty($userHeaderData['profile_image'])): ?>
+            <img src="uploads/avatars/<?php echo htmlspecialchars($userHeaderData['profile_image']); ?>?t=<?php echo time(); ?>"
+                class="w-9 h-9 rounded-lg object-cover border-2 border-white shadow-sm" alt="Profilo">
+        <?php else:
+            $initials = strtoupper(substr($userHeaderData['username'], 0, 2));
+            if (!empty($userHeaderData['nome'])) {
+                if (!empty($userHeaderData['cognome'])) {
+                    $initials = strtoupper(substr($userHeaderData['nome'], 0, 1) . substr($userHeaderData['cognome'], 0, 1));
+                } else {
+                    $initials = strtoupper(substr($userHeaderData['nome'], 0, 2));
+                }
             }
-        }
 
-        // Simple deterministic color
-        $colors = ['bg-red-100 text-red-600', 'bg-green-100 text-green-600', 'bg-blue-100 text-blue-600', 'bg-indigo-100 text-indigo-600', 'bg-purple-100 text-purple-600'];
-        $sum = 0;
-        foreach (str_split($userHeaderData['username']) as $char)
-            $sum += ord($char);
-        $colorClass = $colors[$sum % count($colors)];
-        ?>
-        <div
-            class="w-9 h-9 rounded-lg <?php echo $colorClass; ?> flex items-center justify-center text-xs font-bold border-2 border-white shadow-sm">
-            <?php echo $initials; ?>
+            // Simple deterministic color
+            $colors = ['bg-red-100 text-red-600', 'bg-green-100 text-green-600', 'bg-blue-100 text-blue-600', 'bg-indigo-100 text-indigo-600', 'bg-purple-100 text-purple-600'];
+            $sum = 0;
+            foreach (str_split($userHeaderData['username']) as $char)
+                $sum += ord($char);
+            $colorClass = $colors[$sum % count($colors)];
+            ?>
+            <div
+                class="w-9 h-9 rounded-lg <?php echo $colorClass; ?> flex items-center justify-center text-xs font-bold border-2 border-white shadow-sm">
+                <?php echo $initials; ?>
+            </div>
+        <?php endif; ?>
+        
+    </button>
+    
+    <!-- User Dropdown Menu -->
+    <div id="userDropdownMenu" 
+        class="hidden absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-lg border border-slate-100 py-1 z-[100] origin-top-right focus:outline-none">
+        
+        <div class="px-4 py-2 border-b border-slate-50">
+            <p class="text-xs text-slate-500">Loggato come</p>
+            <p class="text-sm font-bold text-slate-800 truncate"><?php echo htmlspecialchars($userHeaderData['username']); ?></p>
         </div>
-    <?php endif; ?>
-</a>
+
+        <a href="profile.php" class="block px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 flex items-center gap-2">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+            </svg>
+            Il Mio Profilo
+        </a>
+        
+        <button onclick="safeOpenSettings(); toggleUserDropdown();" class="block w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 flex items-center gap-2">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+            </svg>
+            Impostazioni
+        </button>
+
+        <a href="export_data.php" class="block px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 flex items-center gap-2">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+            </svg>
+            Backup Dati
+        </a>
+
+        <div class="border-t border-slate-100 my-1"></div>
+
+        <a href="logout.php" class="block px-4 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center gap-2 font-medium">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+            </svg>
+            Esci
+        </a>
+    </div>
+</div>
+
+<script>
+    function toggleUserDropdown() {
+        const menu = document.getElementById('userDropdownMenu');
+        menu.classList.toggle('hidden');
+    }
+    
+    // Fallback safeOpenSettings if not defined
+    if(typeof safeOpenSettings === 'undefined') {
+        function safeOpenSettings() {
+             if (typeof openSettingsModal === 'function') openSettingsModal();
+             else window.location.href = 'index.php';
+        }
+    }
+
+    // Close on clicking outside - consolidated in one listener if possible or add here
+    document.addEventListener('click', function(e) {
+        const container = document.getElementById('userDropdownContainer');
+        const menu = document.getElementById('userDropdownMenu');
+        if(container && menu && !container.contains(e.target)) {
+            menu.classList.add('hidden');
+        }
+    });
+</script>
+
 <?php
 $profileHtml = ob_get_clean();
 ?>
 
 <!-- Notification Layer (High Z-Index) -->
-<div class="absolute top-4 right-4 flex items-center gap-3 z-[10] pointer-events-none">
+<div class="absolute top-4 right-4 flex items-center gap-3 z-[100]">
 
     <!-- Notification Bell (Interactive) -->
-    <div class="relative cursor-pointer p-2 rounded-lg group pointer-events-auto" id="notifBellBtn">
+    <div class="relative cursor-pointer p-2 rounded-lg group" id="notifBellBtn">
 
         <!-- Background/Blur Layer (Separate to avoid trapping fixed dropdown) -->
         <div
@@ -85,13 +155,7 @@ $profileHtml = ob_get_clean();
         </div>
     </div>
 
-    <!-- Ghost Profile (Invisible, for layout spacing) -->
-    <div class="invisible select-none" aria-hidden="true">
-        <?php echo $profileHtml; ?>
-    </div>
-</div>
-
-<!-- Profile Layer (Standard Z-Index) -->
-<div class="absolute top-4 right-4 flex items-center gap-3 z-[50]">
+    <!-- Profile Dropdown Widget -->
     <?php echo $profileHtml; ?>
+    
 </div>

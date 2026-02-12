@@ -40,33 +40,56 @@
         border-color: #334155 !important;
         /* border-slate-700 */
     }
-    /* Custom Sidebar Scrollbar */
-    #sidebar nav::-webkit-scrollbar {
-        width: 6px;
+    
+    /* Custom Sidebar Scrollbar - Target specific scroll container */
+    #sidebarProjectNav::-webkit-scrollbar {
+        width: 4px; /* Thinner */
     }
 
-    #sidebar nav::-webkit-scrollbar-track {
+    #sidebarProjectNav::-webkit-scrollbar-track {
         background: transparent;
     }
 
-    #sidebar nav::-webkit-scrollbar-thumb {
-        background-color: #334155;
-        /* slate-700 */
-        border-radius: 3px;
+    #sidebarProjectNav::-webkit-scrollbar-thumb {
+        background-color: transparent; /* Hidden by default */
+        border-radius: 4px;
     }
 
-    #sidebar nav {
+    /* Show on hover */
+    #sidebarProjectNav:hover::-webkit-scrollbar-thumb {
+        background-color: #475569; /* slate-600 */
+    }
+
+    #sidebarProjectNav {
         scrollbar-width: thin;
-        scrollbar-color: #334155 transparent;
+        scrollbar-color: transparent transparent; /* Hidden by default for Firefox */
+    }
+    
+    #sidebarProjectNav:hover {
+        scrollbar-color: #475569 transparent; /* Show on hover for Firefox */
+    }
+    
+    /* Ensure project items have explicit display for JS toggling */
+    .project-item {
+        display: list-item;
+    }
+    
+    /* Fix for bottom section overlap if needed */
+    .sidebar-bottom-shadow {
+        box-shadow: 0 -4px 6px -1px rgba(0, 0, 0, 0.1), 0 -2px 4px -1px rgba(0, 0, 0, 0.06);
     }
 </style>
 
+<!-- Script moved to bottom -->
+
 <div id="sidebarOverlay" onclick="toggleSidebar()"
     class="fixed inset-0 bg-black bg-opacity-50 z-40 hidden md:hidden glass"></div>
+    
 <aside id="sidebar"
-    class="fixed inset-y-0 left-0 z-50 w-64 bg-slate-900 text-white p-6 transition-transform duration-300 ease-in-out shadow-xl flex flex-col flex-shrink-0 mobile-closed md:relative md:inset-auto">
+    class="fixed inset-y-0 left-0 z-50 w-64 bg-slate-900 text-white transition-transform duration-300 ease-in-out shadow-xl flex flex-col flex-shrink-0 mobile-closed md:relative md:inset-auto">
 
-    <div class="flex justify-between items-center h-10">
+    <!-- Header Section (Fixed Top) -->
+    <div class="flex justify-between items-center h-16 px-6 shrink-0">
         <a href="index.php"
             class="text-2xl font-bold tracking-tight text-indigo-400 no-underline hover:text-indigo-300 transition block">Flow.</a>
 
@@ -87,17 +110,46 @@
         </button>
     </div>
 
-    <nav class="mt-10 flex-1 overflow-y-auto pr-2">
+    <!-- Projects Controls (Fixed Top) -->
+    <div class="px-6 pb-2 shrink-0">
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.14.0/Sortable.min.js"></script>
         <div class="flex justify-between items-center mb-4">
             <p class="text-xs uppercase text-slate-500 font-semibold tracking-wider">Progetti</p>
         </div>
 
-        <form action="add_project.php" method="POST" class="mb-6">
-            <input type="text" name="nome_progetto" placeholder="Nuovo progetto..."
-                class="w-full bg-slate-800 text-sm border-none rounded p-2 focus:ring-2 focus:ring-indigo-500 text-white">
-        </form>
+        <style>
+            /* Custom Color Picker Styles */
+            input[type="color"]::-webkit-color-swatch-wrapper {
+                padding: 0;
+            }
+            input[type="color"]::-webkit-color-swatch {
+                border: none;
+                border-radius: 0.25rem; 
+            }
+        </style>
 
-        <ul class="space-y-2" id="sidebarProjectList">
+        <form action="add_project.php" method="POST" class="mb-4 flex gap-2">
+            <div class="relative flex-1">
+                 <input type="text" name="nome_progetto" placeholder="Nuovo progetto..." required
+                class="w-full bg-slate-800 text-sm border-none rounded p-2 focus:ring-2 focus:ring-indigo-500 text-white pl-3">
+            </div>
+            <input type="color" name="colore" value="#6366f1" 
+                class="h-9 w-9 p-0 border-none rounded bg-transparent cursor-pointer overflow-hidden" title="Scegli colore">
+        </form>
+        
+        <!-- Project Search Input - Fixed Red Border Removed -->
+        <div class="mb-2 relative">
+             <input type="text" id="projectSearchInput" placeholder="Cerca progetti..." 
+                class="w-full bg-slate-800/50 text-xs border-slate-700 rounded p-2 focus:ring-1 focus:ring-indigo-500 text-slate-300 pl-8 placeholder-slate-500">
+             <svg class="w-3 h-3 text-slate-500 absolute left-2.5 top-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+             </svg>
+        </div>
+    </div>
+
+    <!-- Scrollable Project List -->
+    <nav id="sidebarProjectNav" class="flex-1 overflow-y-auto px-6 min-h-0">
+        <ul class="space-y-2 pb-4" id="sidebarProjectList">
             <?php
             // Recuperiamo i progetti dal DB (Owner o Membro)
             $stmt = $pdo->prepare("
@@ -105,34 +157,36 @@
                 FROM projects p 
                 JOIN project_members pm ON p.id = pm.project_id 
                 WHERE pm.user_id = ? 
-                ORDER BY p.data_modifica DESC
+                ORDER BY p.ordinamento ASC, p.data_modifica DESC
             ");
             $stmt->execute([$_SESSION['user_id']]);
             while ($row = $stmt->fetch()) {
-                $activeClass = (isset($_GET['project_id']) && $_GET['project_id'] == $row['id']) ? 'bg-slate-800 border-indigo-500' : 'border-transparent';
-                echo "<li class='hover:bg-slate-800 p-2 rounded-md cursor-pointer transition-colors border-l-4 $activeClass'>";
-                echo "<a href='index.php?project_id={$row['id']}' class='block w-full text-white no-underline'>";
-                echo htmlspecialchars($row['nome']);
+                $activeClass = (isset($_GET['project_id']) && $_GET['project_id'] == $row['id']) ? 'bg-slate-800' : '';
+                $borderColor = $row['colore'] ?? '#6366f1'; // Fallback
+                
+                // Use inline style for border-left-color to show project color
+                // Also add data-id for sorting
+                echo "<li data-id='{$row['id']}' class='project-item hover:bg-slate-800 p-2 rounded-md cursor-pointer transition-colors border-l-4 $activeClass' style='border-left-color: {$borderColor};'>";
+                echo "<a href='index.php?project_id={$row['id']}' class='block w-full text-white no-underline flex items-center justify-between'>";
+                echo "<span class='project-name text-sm'>" . htmlspecialchars($row['nome']) . "</span>"; // Added class project-name
+                
                 echo "</a></li>";
             }
             ?>
         </ul>
-
-        <!-- Divider -->
-        <div class="my-6 border-t border-slate-700"></div>
-
-        <!-- Social & Admin Links -->
+    </nav>
+    
+    <!-- Fixed Bottom Section: Social & Admin Links -->
+    <div class="p-6 border-t border-slate-800 bg-slate-900 shrink-0 z-10 sidebar-bottom-shadow">
         <ul class="space-y-2">
             <li
                 class="hover:bg-slate-800 p-2 rounded-md cursor-pointer transition-colors border-l-4 border-transparent">
-                <a href="friends.php" class="flex items-center gap-3 w-full text-white no-underline">
+                <a href="collaborators.php" class="flex items-center gap-3 w-full text-white no-underline">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-indigo-400" fill="none"
                         viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
                     </svg>
-                    </svg>
-                    Amici
+                    Collaboratori
                     <span id="sidebarFriendsBadge"
                         class="hidden ml-auto bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded-full"></span>
                 </a>
@@ -198,64 +252,64 @@
             <?php endif; ?>
 
         </ul>
-    </nav>
-
-    <div class="mt-auto pt-6 border-t border-slate-800 space-y-2">
-        <a href="export_data.php"
-            class="flex items-center gap-3 text-slate-400 hover:text-white transition-colors p-2 rounded-md hover:bg-slate-800">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
-                stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                    d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-            </svg>
-            <span class="font-medium text-sm">Backup Dati</span>
-        </a>
-
-        <!-- Settings Button - Depends on openSettingsModal being available in parent -->
-        <!-- We can check if function exists in JS ?? No PHP. -->
-        <!-- We just assume parent has the modal. index.php has it. friends/admin might not have it yet. -->
-        <!-- If they don't have it, we should probably hide this or move Settings modal to included file too. -->
-        <!-- For now, friends/admin pages are simpler. Let's hide Settings/Backup on other pages? -->
-        <!-- OR imply that Sidebar is mostly for index.php navigation. -->
-        <!-- But User wants sidebar on Friends page too. -->
-        <!-- Let's keep it. If openSettingsModal is not defined, error. -->
-        <!-- Ideally, create includes/modals.php -->
-        <a href="profile.php"
-            class="flex items-center gap-3 text-slate-400 hover:text-indigo-400 transition-colors p-2 rounded-md hover:bg-slate-800 w-full text-left">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
-                stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                    d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-            </svg>
-            <span class="font-medium text-sm">Il Mio Profilo</span>
-        </a>
-
-        <script>
-            function safeOpenSettings() {
-                if (typeof openSettingsModal === 'function') openSettingsModal();
-                else window.location.href = 'index.php'; // Fallback
-            }
-        </script>
-
-        <button onclick="safeOpenSettings()"
-            class="flex items-center gap-3 text-slate-400 hover:text-indigo-400 transition-colors p-2 rounded-md hover:bg-slate-800 w-full text-left">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
-                stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                    d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                    d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-            </svg>
-            <span class="font-medium text-sm">Impostazioni</span>
-        </button>
-        <a href="logout.php"
-            class="flex items-center gap-3 text-slate-400 hover:text-white transition-colors p-2 rounded-md hover:bg-slate-800">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
-                stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                    d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-            </svg>
-            <span class="font-medium text-sm">Esci</span>
-        </a>
     </div>
 </aside>
+
+<script>
+    console.log("Sidebar v2.0 - Starting...");
+
+    function initSidebarLogic() {
+        console.log("Sidebar Logic - Running");
+        
+        // Sortable
+        const listEl = document.getElementById('sidebarProjectList');
+        if (listEl) {
+            if (typeof Sortable !== 'undefined') {
+                new Sortable(listEl, {
+                    animation: 150,
+                    ghostClass: 'bg-slate-700',
+                    onEnd: function(evt) {
+                        const searchTerm = document.getElementById('projectSearchInput')?.value || '';
+                        if(searchTerm.length > 0) return;
+                        
+                        const order = Array.from(listEl.querySelectorAll('li[data-id]')).map(li => li.getAttribute('data-id'));
+                        
+                        fetch('reorder_projects.php', {
+                            method: 'POST',
+                            body: JSON.stringify({ order: order }),
+                            headers: { 'Content-Type': 'application/json' }
+                        }).catch(console.error);
+                    }
+                });
+            } else {
+                console.warn("SortableJS not loaded or undefined");
+            }
+        }
+        
+        // Search
+        const searchInput = document.getElementById('projectSearchInput');
+        if (searchInput) {
+            searchInput.addEventListener('input', (e) => {
+                const term = e.target.value.toLowerCase();
+                const items = document.querySelectorAll('#sidebarProjectList li');
+                
+                items.forEach(li => {
+                    const text = li.textContent.toLowerCase();
+                    if (text.includes(term)) {
+                        li.classList.remove('hidden');
+                        li.style.display = ''; // fallback
+                    } else {
+                        li.classList.add('hidden');
+                        li.style.display = 'none'; // fallback
+                    }
+                });
+            });
+        }
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initSidebarLogic);
+    } else {
+        initSidebarLogic();
+    }
+</script>

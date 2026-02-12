@@ -135,6 +135,11 @@ async function loadProjects() {
     const list = document.getElementById('sidebarProjectList');
     if (!list) return;
 
+    // Avoid refreshing if dragging
+    if (document.querySelector('.sortable-drag') || document.querySelector('.sortable-ghost')) {
+        return;
+    }
+
     try {
         const res = await fetch('api_projects.php?action=list_sidebar');
         const json = await res.json();
@@ -146,7 +151,10 @@ async function loadProjects() {
             // Render
             list.innerHTML = projects.map(p => {
                 const isActive = (currentProjectId == p.id);
-                const activeClass = isActive ? 'bg-slate-800 border-indigo-500' : 'border-transparent';
+                // Active class doesn't override border-color if we use inline style correctly? 
+                // We use border-l-4. Text-slate-800 for active background.
+                const activeClass = isActive ? 'bg-slate-800' : '';
+                const borderColor = p.colore || '#6366f1';
 
                 // Escape HTML to prevent XSS
                 const safeName = p.nome.replace(/&/g, "&amp;")
@@ -156,9 +164,9 @@ async function loadProjects() {
                     .replace(/'/g, "&#039;");
 
                 return `
-                    <li class='hover:bg-slate-800 p-2 rounded-md cursor-pointer transition-colors border-l-4 ${activeClass}'>
-                        <a href='index.php?project_id=${p.id}' class='block w-full text-white no-underline'>
-                            ${safeName}
+                    <li data-id='${p.id}' class='hover:bg-slate-800 p-2 rounded-md cursor-pointer transition-colors border-l-4 ${activeClass}' style="border-left-color: ${borderColor};">
+                        <a href='index.php?project_id=${p.id}' class='block w-full text-white no-underline flex items-center justify-between'>
+                            <span>${safeName}</span>
                         </a>
                     </li>
                 `;
@@ -170,7 +178,7 @@ async function loadProjects() {
 async function checkNotifications() {
     try {
         // 1. Friend Requests
-        const resFriends = await fetch('api_friends.php?action=pending_count');
+        const resFriends = await fetch('api_collaborators.php?action=pending_count');
         const jsonFriends = await resFriends.json();
         if (jsonFriends.success) {
             const currentCount = parseInt(jsonFriends.count);
@@ -208,7 +216,6 @@ async function checkNotifications() {
     }
 }
 
-// Start polling
 // Start polling
 document.addEventListener('DOMContentLoaded', () => {
     checkNotifications();
@@ -340,7 +347,7 @@ function switchProjectTab(tabName) {
     activeBtn.classList.add('border-indigo-600', 'text-indigo-600');
 
     if (tabName === 'members') loadProjectMembers();
-    if (tabName === 'members') loadProjectMembers();
+    if (tabName === 'members') loadProjectMembers(); // duplicate line removed in replacement? No, just copy-paste error in view?
     if (tabName === 'attachments' && typeof loadProjectAttachments === 'function') {
         loadProjectAttachments(currentDetailProjectId);
     }
@@ -355,10 +362,14 @@ async function loadProjectDetails() {
             document.getElementById('detailProjectName').value = p.nome;
             document.getElementById('detailProjectDesc').value = p.descrizione || '';
 
+            const colorInput = document.getElementById('detailProjectColor');
+            if (colorInput) colorInput.value = p.colore || '#6366f1';
+
             // Read-only if not owner?
             const isOwner = (p.role === 'owner');
             document.getElementById('detailProjectName').disabled = !isOwner;
             document.getElementById('detailProjectDesc').disabled = !isOwner;
+            if (colorInput) colorInput.disabled = !isOwner;
             document.getElementById('btnSaveDetails').style.display = isOwner ? 'block' : 'none';
         }
     } catch (e) { console.error(e); }
@@ -367,17 +378,19 @@ async function loadProjectDetails() {
 async function saveProjectDetails() {
     const nome = document.getElementById('detailProjectName').value;
     const desc = document.getElementById('detailProjectDesc').value;
+    const colorInput = document.getElementById('detailProjectColor');
+    const colore = colorInput ? colorInput.value : '#6366f1';
 
     try {
         await fetch('api_projects.php?action=update_details', {
             method: 'POST',
-            body: JSON.stringify({ project_id: currentDetailProjectId, nome: nome, descrizione: desc })
+            body: JSON.stringify({ project_id: currentDetailProjectId, nome: nome, descrizione: desc, colore: colore })
         });
         showToast('Dettagli aggiornati!', 'success');
         // Update Title in UI if name changed
         const titleDisplay = document.getElementById('projectTitleDisplay');
         if (titleDisplay) titleDisplay.textContent = nome;
-        loadProjects(); // Refresh sidebar
+        loadProjects(); // Refresh sidebar manually
     } catch (e) { showToast('Errore salvataggio', 'error'); }
 }
 
