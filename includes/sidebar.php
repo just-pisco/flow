@@ -268,6 +268,9 @@
                 new Sortable(listEl, {
                     animation: 150,
                     ghostClass: 'bg-slate-700',
+                    delay: 150, // Wait 150ms before starting drag
+                    delayOnTouchOnly: true, // Only applies to touch
+                    touchStartThreshold: 5, // Allow 5px movement before cancelling
                     onEnd: function(evt) {
                         const searchTerm = document.getElementById('projectSearchInput')?.value || '';
                         if(searchTerm.length > 0) return;
