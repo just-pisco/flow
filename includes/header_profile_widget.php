@@ -13,7 +13,7 @@ if (!isset($userHeaderData)) {
 // Buffer Profile HTML for reuse in layout
 ob_start();
 ?>
-<div class="relative group" id="userDropdownContainer">
+<div class="relative group z-50" id="userDropdownContainer">
     <button onclick="toggleUserDropdown()"
         class="flex items-center gap-2 bg-white rounded-lg p-1 pl-3 pr-1 shadow-sm border border-slate-200 hover:shadow-md hover:border-indigo-300 transition-all no-underline text-slate-700 focus:outline-none">
         
@@ -120,10 +120,10 @@ $profileHtml = ob_get_clean();
 ?>
 
 <!-- Notification Layer (High Z-Index) -->
-<div class="absolute top-4 right-4 flex items-center gap-3 z-[100]">
+<div class="absolute top-4 right-4 flex items-center gap-3">
 
     <!-- Notification Bell (Interactive) -->
-    <div class="relative cursor-pointer p-2 rounded-lg group" id="notifBellBtn">
+    <div class="relative cursor-pointer p-2 rounded-lg group z-0" id="notifBellBtn">
 
         <!-- Background/Blur Layer (Separate to avoid trapping fixed dropdown) -->
         <div

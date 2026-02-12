@@ -7,6 +7,8 @@
 
     #sidebar {
         /* Default mobile state: shown (we control via mobile-closed class) */
+        max-height: 100dvh; /* Fix for mobile address bars */
+        overscroll-behavior: none; /* Prevent scroll chaining/bouncing */
     }
 
     /* FORCE SIDEBAR VISIBILITY ON DESKTOP */
