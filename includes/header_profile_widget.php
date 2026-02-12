@@ -123,7 +123,7 @@ $profileHtml = ob_get_clean();
 <div class="absolute top-4 right-4 flex items-center gap-3">
 
     <!-- Notification Bell (Interactive) -->
-    <div class="relative cursor-pointer p-2 rounded-lg group z-0" id="notifBellBtn">
+    <div class="relative cursor-pointer p-2 rounded-lg group z-10" id="notifBellBtn">
 
         <!-- Background/Blur Layer (Separate to avoid trapping fixed dropdown) -->
         <div

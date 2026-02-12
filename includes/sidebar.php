@@ -7,7 +7,8 @@
 
     #sidebar {
         /* Default mobile state: shown (we control via mobile-closed class) */
-        max-height: 100dvh; /* Fix for mobile address bars */
+        height: 100dvh; /* Force full height */
+        max-height: 100dvh; 
         overscroll-behavior: none; /* Prevent scroll chaining/bouncing */
     }
 
@@ -65,6 +66,7 @@
     #sidebarProjectNav {
         scrollbar-width: thin;
         scrollbar-color: transparent transparent; /* Hidden by default for Firefox */
+        overscroll-behavior: contain; /* Prevent chaining to parent/body */
     }
     
     #sidebarProjectNav:hover {
